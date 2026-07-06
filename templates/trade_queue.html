@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subcontractor Portal — {{ trade_company.name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="logo">Trades<span>Sync</span></div>
+      <div class="flex align-center gap-12">
+        <span class="user-badge">{{ trade_company.name }} ({{ trade_company.trade_type|capitalize }})</span>
+        <a href="{{ url_for('switch_role') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Switch Role</a>
+      </div>
+    </div>
+  </header>
+  
+  <main>
+    <div class="mb-24">
+      <h1 style="margin-bottom: 4px;">{{ trade_company.name }}</h1>
+      <p class="text-muted">Subcontractor Queue &bull; Service Area: {{ trade_company.service_area or 'Metro' }} &bull; Phone: {{ trade_company.phone }}</p>
+    </div>
+
+    {% with messages = get_flashed_messages(category_filter=["success", "error"]) %}
+      {% if messages %}
+        {% for message in messages %}
+          {% if 'accept' in message or 'success' in message %}
+            <div class="alert-box alert-success">{{ message }}</div>
+          {% else %}
+            <div class="alert-box alert-error">{{ message }}</div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="grid grid-2">
+      <!-- Pending Invitations -->
+      <div>
+        <div class="card" style="border-top: 3px solid var(--status-invited);">
+          <h2 style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+            Pending Work Invitations
+            <span class="badge badge-invited" style="font-size: 0.75rem;">{{ pending_invitations|length }} New</span>
+          </h2>
+          <p class="text-muted" style="margin-bottom: 20px;">Review projects and accept or decline based on your availability.</p>
+          
+          {% if pending_invitations %}
+            {% for invite in pending_invitations %}
+              <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--panel-border); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                <div class="flex justify-between align-center mb-24">
+                  <h3 style="margin-bottom: 0;">{{ invite.task.project.name }}</h3>
+                  <span class="badge badge-invited" style="font-size: 0.7rem;">Invitation</span>
+                </div>
+                <p style="font-size: 0.95rem; margin-bottom: 6px;" class="text-primary">Scope: <strong>{{ invite.task.name }}</strong></p>
+                <p style="font-size: 0.9rem; margin-bottom: 6px;" class="text-muted">Address: {{ invite.task.project.address }}</p>
+                <p style="font-size: 0.9rem; margin-bottom: 16px;" class="text-muted">Scheduled Date: <strong>{{ invite.task.scheduled_date or 'TBD' }}</strong></p>
+                
+                <div class="flex gap-12" style="margin-top: 12px;">
+                  <form method="post" action="{{ url_for('accept_assignment', assignment_id=invite.id) }}" style="flex: 1;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 8px 12px; font-size: 0.85rem;">Accept Work</button>
+                  </form>
+                  <form method="post" action="{{ url_for('decline_assignment', assignment_id=invite.id) }}" style="flex: 1;">
+                    <button type="submit" class="btn btn-danger" style="width: 100%; padding: 8px 12px; font-size: 0.85rem;">Decline</button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-muted text-center" style="padding: 32px; border: 1px dashed var(--panel-border); border-radius: 12px;">No pending invitations. All caught up!</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Active Schedule -->
+      <div>
+        <div class="card" style="border-top: 3px solid var(--status-complete);">
+          <h2 style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+            Active Job Schedule
+            <span class="badge badge-complete" style="font-size: 0.75rem;">{{ active_assignments|length }} Active</span>
+          </h2>
+          <p class="text-muted" style="margin-bottom: 20px;">Your upcoming accepted tasks. Click a task to report site check-ins, delays, or completions.</p>
+          
+          {% if active_assignments %}
+            {% for assign in active_assignments %}
+              <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--panel-border); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                <div class="flex justify-between align-center mb-24">
+                  <h3 style="margin-bottom: 0;">{{ assign.task.project.name }}</h3>
+                  <span class="badge badge-{{ assign.task.status }}">{{ assign.task.status }}</span>
+                </div>
+                <p style="font-size: 0.95rem; margin-bottom: 6px;" class="text-primary">Scope: <strong>{{ assign.task.name }}</strong></p>
+                <p style="font-size: 0.9rem; margin-bottom: 6px;" class="text-muted">Address: {{ assign.task.project.address }}</p>
+                <p style="font-size: 0.9rem; margin-bottom: 16px;" class="text-muted">Scheduled Date: <strong>{{ assign.task.scheduled_date or 'TBD' }}</strong></p>
+                
+                <a href="{{ url_for('task_detail', task_id=assign.task.id) }}" class="btn btn-secondary" style="width: 100%; display: block; padding: 8px 12px; font-size: 0.85rem; text-align: center;">View &amp; Update Status</a>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-muted text-center" style="padding: 32px; border: 1px dashed var(--panel-border); border-radius: 12px;">No active assignments. Accept invitations to build your schedule.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

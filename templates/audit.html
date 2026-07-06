@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audit Log — TradesSync</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="logo">Trades<span>Sync</span></div>
+      <div class="flex align-center gap-12">
+        <span class="user-badge">GC Portal</span>
+        <a href="{{ url_for('gc_dashboard') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Dashboard</a>
+      </div>
+    </div>
+  </header>
+  
+  <main>
+    <a href="{{ url_for('gc_dashboard') }}" style="display: inline-block; margin-bottom: 20px;">&larr; Back to dashboard</a>
+    
+    <div class="card">
+      <h1 style="margin-bottom: 8px;">System Audit Log</h1>
+      <p class="text-muted" style="margin-bottom: 24px;">Complete immutable trace of all scheduling changes, invitations, check-ins, delay reports, and client notifications.</p>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp (UTC)</th>
+              <th>Actor</th>
+              <th>Action</th>
+              <th>Entity</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in entries %}
+              <tr>
+                <td style="font-family: Consolas, monospace; font-size: 0.85rem; color: var(--text-secondary);">
+                  {{ entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                </td>
+                <td>
+                  <span style="font-weight: 600;">{{ entry.actor }}</span>
+                </td>
+                <td>
+                  <span class="badge {% if 'delay' in entry.action or 'decline' in entry.action %}badge-delayed{% elif 'complete' in entry.action or 'accept' in entry.action %}badge-complete{% else %}badge-invited{% endif %}">
+                    {{ entry.action|replace('_', ' ') }}
+                  </span>
+                </td>
+                <td style="font-family: Consolas, monospace; font-size: 0.85rem;" class="text-muted">
+                  {{ entry.entity_type }} #{{ entry.entity_id }}
+                </td>
+                <td style="font-size: 0.85rem; max-width: 320px; word-wrap: break-word;">
+                  {{ entry.detail }}
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted" style="padding: 24px;">No audit events recorded yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operations Dashboard — TradesSync</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="logo">Trades<span>Sync</span></div>
+      <div class="flex align-center gap-12">
+        <span class="user-badge">GC Portal</span>
+        <a href="{{ url_for('switch_role') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Switch Role</a>
+      </div>
+    </div>
+  </header>
+  
+  <main>
+    <div class="flex justify-between align-center mb-24">
+      <div>
+        <h1 style="margin-bottom: 4px;">Operations Dashboard</h1>
+        <p class="text-muted">Active projects schedule, subcontractor coordination, and field status</p>
+      </div>
+      <div class="flex gap-12">
+        <a href="{{ url_for('audit_log') }}" class="btn btn-secondary">View Audit Log</a>
+        <a href="{{ url_for('new_project') }}" class="btn btn-primary">+ Create Project</a>
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(category_filter=["success", "error"]) %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert-box alert-success">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Today on Site Section -->
+    <div class="card">
+      <h2 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        Today on Site <span class="badge badge-checked_in" style="font-size: 0.75rem;">Live Status</span>
+      </h2>
+      <p style="margin-bottom: 16px;">Crews scheduled or checked in for today: <strong>{{ today.strftime('%A, %b %d, %Y') }}</strong></p>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Task / Scope</th>
+              <th>Subcontractor</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set active_today = [] %}
+            {% for row in project_rows %}
+              {% for task in row.project.tasks %}
+                {% if task.status in ('confirmed', 'checked_in', 'delayed', 'complete') %}
+                  {% if not task.scheduled_date or task.scheduled_date == today %}
+                    {% set _ = active_today.append(task) %}
+                    <tr>
+                      <td><a href="{{ url_for('project_detail', project_id=row.project.id) }}" style="font-weight: 600;">{{ row.project.name }}</a></td>
+                      <td>{{ task.name }}</td>
+                      <td>
+                        {% if task.assignments %}
+                          {% set active_assign = task.assignments|selectattr('status', 'equalto', 'accepted')|list|last %}
+                          {% if active_assign %}
+                            {{ active_assign.trade_company.name }}
+                          {% else %}
+                            <span class="text-muted">Unassigned</span>
+                          {% endif %}
+                        {% else %}
+                          <span class="text-muted">Unassigned</span>
+                        {% endif %}
+                      </td>
+                      <td><span class="badge badge-{{ task.status }}">{{ task.status }}</span></td>
+                      <td>{{ task.scheduled_date or 'TBD' }}</td>
+                    </tr>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+            {% if not active_today %}
+              <tr>
+                <td colspan="5" class="text-center text-muted" style="padding: 24px;">No active trades on site scheduled for today.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Active Projects List -->
+    <h2 style="margin-bottom: 16px;">Active Projects</h2>
+    <div class="grid grid-2">
+      {% for row in project_rows %}
+        <div class="card">
+          <div class="project-card-header flex justify-between align-center">
+            <div>
+              <h3><a href="{{ url_for('project_detail', project_id=row.project.id) }}">{{ row.project.name }}</a></h3>
+              <p style="font-size: 0.85rem; margin: 4px 0 0;" class="text-muted">{{ row.project.address }}</p>
+            </div>
+            <span class="badge badge-complete">{{ row.project.status }}</span>
+          </div>
+          
+          <div style="font-size: 0.9rem; margin-bottom: 16px;">
+            <div class="flex justify-between" style="margin-bottom: 6px;">
+              <span class="text-muted">Client:</span>
+              <span>{{ row.project.client_name }}</span>
+            </div>
+            <div class="flex justify-between" style="margin-bottom: 6px;">
+              <span class="text-muted">Budget:</span>
+              <span style="font-weight: 500;">${{ "%.2f"|format(row.project.budget) }}</span>
+            </div>
+          </div>
+          
+          <div class="grid grid-3" style="gap: 10px; text-align: center; font-size: 0.8rem; margin-top: 12px;">
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 8px; border-radius: 8px;">
+              <span style="display: block; font-weight: 700; font-size: 1.1rem; color: var(--status-delayed);">{{ row.late_tasks|length }}</span>
+              <span class="text-muted">Late Tasks</span>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 8px; border-radius: 8px;">
+              <span style="display: block; font-weight: 700; font-size: 1.1rem; color: var(--status-invited);">{{ row.pending_invites|length }}</span>
+              <span class="text-muted">Invites Pending</span>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 8px; border-radius: 8px;">
+              <span style="display: block; font-weight: 700; font-size: 1.1rem; color: var(--status-pending);">{{ row.needs_trade|length }}</span>
+              <span class="text-muted">Need Trade</span>
+            </div>
+          </div>
+          
+          <div style="margin-top: 18px; border-top: 1px solid var(--panel-border); padding-top: 14px;" class="flex justify-between align-center">
+            <span class="text-muted" style="font-size: 0.85rem;">Upcoming: {{ row.upcoming|length }} tasks</span>
+            <a href="{{ url_for('project_detail', project_id=row.project.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Manage Schedule &rarr;</a>
+          </div>
+        </div>
+      {% else %}
+        <div class="card text-center" style="grid-column: 1 / -1; padding: 48px 24px;">
+          <h3>No projects registered yet</h3>
+          <p>Get started by creating your first construction project template.</p>
+          <a href="{{ url_for('new_project') }}" class="btn btn-primary" style="margin-top: 16px;">Create Project</a>
+        </div>
+      {% endfor %}
+    </div>
+  </main>
+</body>
+</html>

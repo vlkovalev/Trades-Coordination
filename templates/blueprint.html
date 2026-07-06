@@ -1,0 +1,1136 @@
+<title>Construction Trade Coordination Platform — Product Blueprint</title>
+<style>
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0B1D33; --panel: #122844; --panel-2: #16305A; --ink: #EAF3FB; --ink-dim: #B7CBE2;
+      --line: #3E6390; --line-soft: #24476E; --accent: #FF7A33; --accent-ink: #1A0D05;
+      --good: #4FD1A5; --warn: #F2C14E; --bad: #FF6B6B; --sidebar-ink: #DCEAF7;
+    }
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #F2F4F7; --panel: #0F2A47; --panel-2: #16305A; --ink: #10233B; --ink-dim: #43597A;
+      --line: #C3D2E2; --line-soft: #DCE6F0; --accent: #D65A16; --accent-ink: #FFFFFF;
+      --good: #1E8F6E; --warn: #A6790A; --bad: #C43D3D; --sidebar-ink: #DCEAF7;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0B1D33; --panel: #122844; --panel-2: #16305A; --ink: #EAF3FB; --ink-dim: #B7CBE2;
+    --line: #3E6390; --line-soft: #24476E; --accent: #FF7A33; --accent-ink: #1A0D05;
+    --good: #4FD1A5; --warn: #F2C14E; --bad: #FF6B6B; --sidebar-ink: #DCEAF7;
+  }
+  :root[data-theme="light"] {
+    --bg: #F2F4F7; --panel: #0F2A47; --panel-2: #16305A; --ink: #10233B; --ink-dim: #43597A;
+    --line: #C3D2E2; --line-soft: #DCE6F0; --accent: #D65A16; --accent-ink: #FFFFFF;
+    --good: #1E8F6E; --warn: #A6790A; --bad: #C43D3D; --sidebar-ink: #DCEAF7;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    font-size: 16px; line-height: 1.62;
+  }
+  h1, h2, h3, h4, .eyebrow, .navlabel, .cellhead, th, .tag, .stamp {
+    font-family: Bahnschrift, "Arial Narrow", "Segoe UI Semibold", sans-serif;
+  }
+  code, .mono, td.num, .field, .stat-num {
+    font-family: Consolas, "Cascadia Mono", "SFMono-Regular", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  a { color: var(--accent); }
+
+  /* ---------- shell ---------- */
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 300px; flex: 0 0 300px; background: var(--panel);
+    color: var(--sidebar-ink); position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    border-right: 3px solid var(--accent);
+  }
+  .sidebar-head {
+    padding: 22px 20px 16px; border-bottom: 1px solid var(--line-soft);
+  }
+  .sidebar-head .stamp {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
+  }
+  .sidebar-head h1 {
+    font-size: 19px; margin: 8px 0 4px; line-height: 1.25; color: #fff; text-wrap: balance;
+  }
+  .sidebar-head .sub { font-size: 12px; color: var(--sidebar-ink); opacity: .75; font-family: Georgia, serif; font-style: italic; }
+  .toc { list-style: none; margin: 0; padding: 10px 0 30px; }
+  .toc a {
+    display: flex; gap: 10px; padding: 7px 20px; font-size: 13px; color: var(--sidebar-ink);
+    text-decoration: none; border-left: 3px solid transparent;
+  }
+  .toc a .n { font-family: Consolas, monospace; color: var(--accent); flex: 0 0 20px; }
+  .toc a:hover { background: var(--panel-2); border-left-color: var(--accent); }
+
+  .main { flex: 1 1 auto; min-width: 0; padding: 0 0 100px; }
+  .titleblock {
+    padding: 46px 56px 30px; border-bottom: 3px solid var(--accent);
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    color: #fff;
+  }
+  .titleblock .stamp { font-size: 12px; letter-spacing: .16em; color: var(--accent); text-transform: uppercase; }
+  .titleblock h1 { font-size: 34px; margin: 10px 0 8px; text-wrap: balance; }
+  .titleblock .meta { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 18px; font-size: 12px; font-family: Consolas, monospace; color: var(--sidebar-ink); opacity: .85; }
+  .titleblock .meta div span { display: block; opacity: .6; text-transform: uppercase; letter-spacing: .08em; font-size: 10px; }
+
+  section.sec { padding: 44px 56px; max-width: 980px; }
+  section.sec + section.sec { border-top: 1px solid var(--line-soft); }
+  .sec .eyebrow {
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px;
+  }
+  .sec h2 { font-size: 27px; margin: 0 0 18px; text-wrap: balance; }
+  .sec h3 { font-size: 19px; margin: 30px 0 10px; color: var(--ink); }
+  .sec h4 { font-size: 15px; margin: 20px 0 8px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .04em; }
+  .sec p { max-width: 68ch; }
+  .sec ul, .sec ol { max-width: 68ch; padding-left: 22px; }
+  .sec li { margin: 4px 0; }
+
+  .lede { font-size: 18px; color: var(--ink-dim); max-width: 68ch; }
+
+  /* ---------- tables ---------- */
+  .table-wrap { overflow-x: auto; margin: 14px 0 26px; border: 1px solid var(--line); border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { background: var(--panel); color: #fff; font-weight: 600; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: var(--line-soft); background: color-mix(in srgb, var(--line-soft) 45%, transparent); }
+
+  /* ---------- components ---------- */
+  .tag {
+    display: inline-block; font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 2px; font-weight: 600;
+  }
+  .tag-mvp { background: var(--good); color: #062; color: #06281d; }
+  .tag-v1 { background: var(--line); color: var(--ink); }
+  .tag-v2 { background: var(--warn); color: #3a2900; }
+  .tag-adv { background: var(--panel-2); color: #fff; }
+
+  .callout {
+    position: relative; margin: 22px 0; padding: 14px 18px 14px 22px; background: var(--line-soft);
+    background: color-mix(in srgb, var(--line-soft) 55%, transparent);
+    border-left: 3px solid var(--accent); border-radius: 0 3px 3px 0; max-width: 68ch;
+  }
+  .callout .cap { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); font-family: Bahnschrift, sans-serif; margin-bottom: 4px; }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 18px 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0; }
+  @media (max-width: 720px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+  .card {
+    border: 1px solid var(--line); border-radius: 4px; padding: 14px 16px; background: var(--line-soft);
+    background: color-mix(in srgb, var(--line-soft) 35%, transparent);
+  }
+  .card h4 { margin-top: 0; color: var(--accent); }
+  .card p { font-size: 14px; margin: 4px 0 0; }
+
+  .stat-row { display: flex; gap: 26px; flex-wrap: wrap; margin: 20px 0; }
+  .stat { min-width: 140px; }
+  .stat .stat-num { font-size: 26px; color: var(--accent); display: block; }
+  .stat .stat-label { font-size: 12px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .05em; }
+
+  .roadmap-phase { border: 1px solid var(--line); border-radius: 4px; margin: 16px 0; overflow: hidden; }
+  .roadmap-phase .ph-head { background: var(--panel); color: #fff; padding: 10px 18px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .roadmap-phase .ph-head b { font-family: Bahnschrift, sans-serif; font-size: 15px; }
+  .roadmap-phase .ph-head span { font-size: 11px; color: var(--sidebar-ink); opacity: .8; font-family: Consolas, monospace; }
+  .roadmap-phase .ph-body { padding: 14px 18px; }
+
+  .sev { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+  .sev::before { content: ""; width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .sev-high::before { background: var(--bad); }
+  .sev-med::before { background: var(--warn); }
+  .sev-low::before { background: var(--good); }
+
+  hr.rule { border: none; border-top: 1px dashed var(--line); margin: 30px 0; }
+
+  .final-rec { background: var(--panel); color: #fff; padding: 30px 32px; border-radius: 6px; margin-top: 20px; border-top: 3px solid var(--accent); }
+  .final-rec h3 { color: var(--accent); margin-top: 0; }
+  .final-rec p { color: var(--sidebar-ink); max-width: 70ch; }
+
+  .backtotop { display: inline-block; margin-top: 20px; font-size: 12px; color: var(--ink-dim); text-decoration: none; }
+
+  @media print { .sidebar { display: none; } }
+</style>
+
+<div class="shell">
+  <nav class="sidebar">
+    <div class="sidebar-head">
+      <div class="stamp">Product Blueprint · Rev A</div>
+      <h1>Construction Trade Coordination Platform</h1>
+      <div class="sub">Coordination OS for schedules, trades, materials, inspections &amp; clients</div>
+    </div>
+    <ul class="toc">
+      <li><a href="#s1"><span class="n">01</span> Executive Summary</a></li>
+      <li><a href="#s2"><span class="n">02</span> Problem Analysis by User Type</a></li>
+      <li><a href="#s3"><span class="n">03</span> Product Positioning</a></li>
+      <li><a href="#s4"><span class="n">04</span> Core Workflow Design</a></li>
+      <li><a href="#s5"><span class="n">05</span> User Roles &amp; Permissions</a></li>
+      <li><a href="#s6"><span class="n">06</span> Function-by-Function Blueprint</a></li>
+      <li><a href="#s7"><span class="n">07</span> Smart Scheduler Design</a></li>
+      <li><a href="#s8"><span class="n">08</span> Trade Availability &amp; Crew</a></li>
+      <li><a href="#s9"><span class="n">09</span> Materials &amp; Supplier Coordination</a></li>
+      <li><a href="#s10"><span class="n">10</span> Permits, Inspections &amp; Municipality</a></li>
+      <li><a href="#s11"><span class="n">11</span> Mobile-First Field App</a></li>
+      <li><a href="#s12"><span class="n">12</span> AI Assistant &amp; Automation</a></li>
+      <li><a href="#s13"><span class="n">13</span> Dashboard &amp; Reporting</a></li>
+      <li><a href="#s14"><span class="n">14</span> Integration Strategy</a></li>
+      <li><a href="#s15"><span class="n">15</span> Data Model &amp; Architecture</a></li>
+      <li><a href="#s16"><span class="n">16</span> MVP Scope</a></li>
+      <li><a href="#s17"><span class="n">17</span> Competitive Differentiation</a></li>
+      <li><a href="#s18"><span class="n">18</span> Pricing &amp; Revenue Model</a></li>
+      <li><a href="#s19"><span class="n">19</span> Go-To-Market Strategy</a></li>
+      <li><a href="#s20"><span class="n">20</span> Risks &amp; Mitigation</a></li>
+      <li><a href="#s21"><span class="n">21</span> Testing &amp; QA Plan</a></li>
+      <li><a href="#s22"><span class="n">22</span> Product Roadmap</a></li>
+      <li><a href="#s23"><span class="n">23</span> Final Build Priorities</a></li>
+    </ul>
+  </nav>
+
+  <main class="main">
+    <div class="titleblock">
+      <div class="stamp">Sheet Index · Coordination OS</div>
+      <h1>Construction Trade Coordination Platform</h1>
+      <div class="meta">
+        <div><span>Category</span>Trade coordination operating system</div>
+        <div><span>Ecosystem</span>Drawliner · ADUFlow · this platform</div>
+        <div><span>Scope</span>23-section product blueprint</div>
+        <div><span>Status</span>Strategy &amp; MVP definition</div>
+      </div>
+    </div>
+
+    <section class="sec" id="s1">
+      <div class="eyebrow">01 · Executive Summary</div>
+      <h2>Stop calling it a scheduling app</h2>
+      <p class="lede">A calendar tells you when something is supposed to happen. It does not tell you why plumbing is stalled because drywall hasn't been inspected, why the framer is idle because lumber is three days late, or why the homeowner is calling for the fourth time this week. That gap — between "the date on the calendar" and "what actually has to be true for the next trade to start" — is the entire product.</p>
+
+      <p>General contractors do not lose money because they lack a calendar. They lose money because <strong>handoffs fail silently</strong>: a trade finishes and nobody tells the next one, an inspection fails and nobody re-sequences downstream work, a delivery slips and the crew shows up to a site with no material. Every one of those failures currently gets caught — if it's caught at all — by a phone call. This platform replaces the phone call with a system that already knows the dependency existed.</p>
+
+      <p>That's why <strong>Construction Trade Coordination Platform</strong> is the right category name, and "scheduling app" or "project management tool" are both wrong. A scheduling app manages dates. A project management tool manages tasks and documents for the GC's own team. Neither one has a native concept of "a trade," "a downstream dependency," "a materials-blocking condition," or "a homeowner who needs a plain-English update." This product is built around exactly those four concepts, and everything else — the calendar view, the Gantt chart, the dashboard — is a rendering of the coordination graph, not the product itself.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h4>The core workflow transformation</h4>
+          <p>Today: GC manually re-derives "who needs to know what" every time something changes, by phone or text, from memory. Tomorrow: the dependency graph (schedule → trade → material → inspection → next trade → client) derives it automatically, and a human approves before anything customer-facing goes out.</p>
+        </div>
+        <div class="card">
+          <h4>Why the ecosystem matters</h4>
+          <p>Standalone, this is "one more app trades have to check." Connected to <strong>Drawliner</strong> (takeoffs feed realistic durations) and <strong>ADUFlow</strong> (permit/municipality status becomes a real schedule gate), it becomes the only coordination layer that knows the true state of a project end-to-end — from quantity takeoff to final inspection. That data loop is very hard for a generic PM tool to replicate without owning the estimating and permitting layers too.</p>
+        </div>
+      </div>
+
+      <h3>Biggest pain points this solves</h3>
+      <ul>
+        <li><strong>No-shows and double-booking</strong> — trades commit to work they can't actually staff, and nobody finds out until the truck doesn't show up.</li>
+        <li><strong>Silent handoff failures</strong> — the previous trade finishes (or doesn't) and the next trade is not automatically told either way.</li>
+        <li><strong>Materials as an invisible dependency</strong> — schedules assume materials arrive on time; when they don't, nothing in the schedule reacts.</li>
+        <li><strong>Inspection-gated work treated as calendar dates</strong> — a schedule says "drywall starts the 14th" when it should say "drywall starts when rough-in inspection passes," which is a different kind of fact.</li>
+        <li><strong>Homeowners as an afterthought</strong> — every update is a manual phone call the GC has to remember to make, usually only after something's already gone wrong.</li>
+      </ul>
+
+      <h3>What the first version should focus on</h3>
+      <p>Phase 1 is deliberately narrow: turn an accepted estimate into a real schedule, get trades to accept/decline on their phone, and make the "next trade" and "homeowner" notifications automatic and trustworthy. No AI autonomy, no municipal integration, no supplier EDI. See <a href="#s16">Section 16 — MVP Scope</a>.</p>
+
+      <h3>What makes this hard to copy</h3>
+      <ol>
+        <li>The dependency graph itself — construction-specific sequencing logic (trade → inspection → material → trade) that generic PM tools don't model natively.</li>
+        <li>Two-sided trust — trades must actually use the mobile flow (few taps, no learning curve) or the whole coordination graph collapses back to phone calls.</li>
+        <li>The ecosystem data loop with Drawliner and ADUFlow — real quantities, real permit status, and real completion data compounding into better estimates and schedules over time.</li>
+      </ol>
+
+      <div class="callout">
+        <div class="cap">Reading this document</div>
+        Sections are ordered as a build sequence, not a feature wishlist — Section 4 defines the workflow every later section implements a piece of, and Section 16 tells you which pieces to build first.
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="eyebrow">02 · Problem Analysis by User Type</div>
+      <h2>Where the coordination actually breaks</h2>
+      <p class="lede">Every user type below is missing the same thing for a different reason: a shared, trustworthy source of truth for "what has to happen next." The fixes differ per role because the failure shows up differently in each one's day.</p>
+
+      <h3>General Contractors</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Problem</th><th>Root cause</th><th>Current workaround</th><th>Business impact</th><th>Product opportunity</th><th>Feature</th></tr>
+        <tr><td>Trades don't show up</td><td>No binding acceptance step — a verbal "yeah I'll be there" isn't tracked or confirmed</td><td>Call the trade the night before to "confirm"</td><td>Dead crew-day, cascading delay to every downstream trade</td><td>Make acceptance a real state with a deadline and an escalation path</td><td>Trade invite → accept/decline with auto-escalation to backup trade</td></tr>
+        <tr><td>Last-minute schedule changes</td><td>Delays aren't propagated — one slip doesn't recalculate anything downstream</td><td>GC manually re-calls every affected trade</td><td>Redundant labor, trades idle or double-booked elsewhere</td><td>Recalculate dependent tasks automatically, notify only affected parties</td><td>Dependency-aware auto-reschedule (Section 7)</td></tr>
+        <tr><td>Material delays</td><td>Materials aren't modeled as a schedule dependency, just a separate purchase order</td><td>GC discovers the delay when the crew calls from an empty site</td><td>Wasted trade dispatch, homeowner frustration</td><td>Treat delivery dates as blocking conditions on tasks</td><td>Materials-aware scheduling (Section 9)</td></tr>
+        <tr><td>Nobody knows who's on site tomorrow</td><td>Schedule lives in the GC's head / a paper board, not a shared view</td><td>End-of-day recap calls to the super</td><td>Missed prep, no accountability if something goes wrong on site</td><td>One live "tomorrow" view for every stakeholder</td><td>GC daily dashboard (Section 13)</td></tr>
+        <tr><td>Constant phone calls</td><td>Phone is the only synchronization mechanism that currently works</td><td>Answer every call personally, all day</td><td>GC becomes the bottleneck for every status question</td><td>Give every party a self-serve status view</td><td>Role-specific dashboards + auto-notifications</td></tr>
+        <tr><td>Inspection delays</td><td>Inspection scheduling is external and disconnected from the build schedule</td><td>Call the municipality, wait on hold</td><td>Entire downstream schedule blocked with no visibility into why</td><td>Model inspections as first-class schedule gates</td><td>Inspection-gated scheduling (Section 10)</td></tr>
+        <tr><td>Poor visibility into project status</td><td>Status is scattered across texts, calls, and memory</td><td>Mental math / walking the site</td><td>Slow, error-prone answers to "are we on track?"</td><td>Single rollup of schedule vs. actual, per project</td><td>Project status rollup + at-risk flagging</td></tr>
+        <tr><td>Manual rescheduling</td><td>No tool understands trade dependencies well enough to automate it</td><td>Rebuild the plan by hand in a notebook or spreadsheet</td><td>Hours of admin time per disruption</td><td>Automate the mechanical part, keep humans on the judgment calls</td><td>Smart Scheduler with human-approved changes (Section 7)</td></tr>
+        <tr><td>No critical-path visibility</td><td>Schedules are flat task lists, not sequenced dependency graphs</td><td>Experience and gut feel</td><td>GC can't tell which delay actually threatens the finish date</td><td>Compute and surface critical path automatically</td><td>Critical path view in Smart Scheduler and dashboard</td></tr>
+        <tr><td>No single source of truth</td><td>Estimate, schedule, texts, and drawings live in different tools</td><td>GC personally reconciles everything</td><td>Errors, rework, disputes with trades and clients</td><td>One record per project that every role reads from</td><td>Unified project record (Section 15)</td></tr>
+      </table></div>
+
+      <h3>Trades and Subcontractors</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Problem</th><th>Root cause</th><th>Current workaround</th><th>Business impact</th><th>Product opportunity</th><th>Feature</th></tr>
+        <tr><td>Double-booking</td><td>Trades run their own calendar separately from every GC they work with</td><td>Mental tracking across multiple GCs' texts/calls</td><td>Missed jobs, damaged relationships, wasted GC dispatch</td><td>A trade-owned availability calendar every GC schedules against</td><td>Trade Availability (Section 8)</td></tr>
+        <tr><td>Missing drawings</td><td>Drawings are emailed once and go stale after revisions</td><td>Call the office, ask for the latest PDF</td><td>Wrong work performed, rework, disputes</td><td>Drawings linked to the task, always current revision</td><td>Drawing/document access (Section 6-G)</td></tr>
+        <tr><td>Wrong addresses</td><td>Address is retyped by hand across texts, emails, and paper tickets</td><td>Call the GC to confirm on arrival day</td><td>Late arrival, wasted drive time</td><td>Address is a structured field on the job, one-tap navigation</td><td>Mobile job detail screen (Section 11)</td></tr>
+        <tr><td>Waiting on previous trades</td><td>No visibility into whether the predecessor task is actually done</td><td>Show up and hope, or call ahead</td><td>Wasted trips, idle crew-days</td><td>Real-time task status visible before dispatch</td><td>Dependency status in mobile task view</td></tr>
+        <tr><td>Schedule changes not communicated</td><td>GC has to remember to call every affected trade individually</td><td>Trade finds out when they show up</td><td>Lost trust in the GC, wasted crew time</td><td>Automatic notification on any change affecting that trade</td><td>Notifications and Alerts (Section 6-K)</td></tr>
+        <tr><td>No easy way to report completion</td><td>Completion is reported verbally or not at all</td><td>Call/text the GC "all done"</td><td>GC doesn't know to notify the next trade or client</td><td>One-tap "mark complete" with photo, triggers downstream automatically</td><td>Check-in/check-out + completion report (Section 6-F)</td></tr>
+        <tr><td>No clear site instructions</td><td>Instructions are verbal, given once, easily forgotten</td><td>Call the super on arrival</td><td>Wrong assumptions about scope or access</td><td>Structured, persistent site instructions attached to the task</td><td>Job detail screen with scope + notes</td></tr>
+        <tr><td>No easy photo/document upload</td><td>Existing tools aren't built for one-handed field use</td><td>Text photos to the GC's personal phone</td><td>Documentation scattered, lost, unsearchable</td><td>One-tap photo capture tied to the specific task</td><td>Mobile completion/delay reporting (Section 11)</td></tr>
+        <tr><td>No simple mobile workflow</td><td>Existing PM tools are desk-first, built for GC back-office use</td><td>Trades avoid the tool, revert to texting</td><td>Adoption failure kills the whole coordination graph</td><td>Field workflows designed first for a phone, in gloves, in the sun</td><td>Mobile-First Field App (Section 11)</td></tr>
+      </table></div>
+
+      <h3>Homeowners and Clients</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Problem</th><th>Root cause</th><th>Current workaround</th><th>Business impact</th><th>Product opportunity</th><th>Feature</th></tr>
+        <tr><td>Don't know when crews arrive</td><td>No shared calendar view exposed to the client</td><td>Text the GC and wait for a reply</td><td>Missed access windows (pets, locked gates, parking)</td><td>Homeowner-facing view of upcoming visits</td><td>Homeowner dashboard (Section 13)</td></tr>
+        <tr><td>Poor communication</td><td>Updates depend on the GC remembering to call</td><td>Homeowner calls when anxious, GC calls when there's news</td><td>Erodes trust, generates reviews about "communication," not workmanship</td><td>Default-on milestone updates, no manual step required</td><td>Client/Homeowner Communication (Section 6-J)</td></tr>
+        <tr><td>Constant delays</td><td>Real, but made worse by not knowing delays are coming</td><td>Find out when the crew doesn't show</td><td>Anger is proportional to surprise, not to the delay itself</td><td>Proactive delay notice as soon as the GC knows</td><td>Delay reporting → automatic homeowner notice</td></tr>
+        <tr><td>No visibility into progress</td><td>Progress lives in the GC's head or a paper punch list</td><td>Ask at the next call</td><td>Feels like nothing is happening even when it is</td><td>Milestone timeline with photos, updated automatically</td><td>Homeowner dashboard project timeline</td></tr>
+        <tr><td>Confusing project status</td><td>Construction jargon ("rough-in," "punch") isn't explained</td><td>Homeowner guesses or asks</td><td>Anxiety, repeated "what does that mean" calls</td><td>Plain-language status, no jargon</td><td>Homeowner-friendly status copy (AI-assisted drafting, Section 12)</td></tr>
+        <tr><td>Unclear next steps</td><td>No forward-looking view, only what already happened</td><td>Ask the GC "what's next"</td><td>Feels passive and out of control</td><td>"What's next" always visible</td><td>Homeowner dashboard next-steps card</td></tr>
+        <tr><td>Too many manual updates required from the GC</td><td>Every update is a manual, one-off action</td><td>GC updates clients between other work, inconsistently</td><td>GC time drain, inconsistent client experience</td><td>Automate the routine 80%, let the GC handle judgment calls</td><td>Auto-drafted, human-approved client updates</td></tr>
+      </table></div>
+
+      <h3>Municipalities and Inspectors</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Problem</th><th>Root cause</th><th>Current workaround</th><th>Business impact</th><th>Product opportunity</th><th>Feature</th></tr>
+        <tr><td>Inspection scheduling friction</td><td>Booking an inspection requires a separate portal, call, or in-person visit</td><td>Contractor calls or uses a disconnected municipal portal</td><td>Wasted admin time, scheduling conflicts</td><td>Request inspections from inside the same tool that tracks the schedule</td><td>Inspection request flow (Section 10)</td></tr>
+        <tr><td>Missed inspections</td><td>No shared reminder system between contractor and inspector</td><td>Manual calendar entries on both sides</td><td>Reinspection fees, schedule slippage</td><td>Shared reminders, both sides see the same appointment</td><td>Inspection Coordination (Section 6-I)</td></tr>
+        <tr><td>Poor communication with contractors</td><td>Inspectors and GCs don't share a system, only phone tag</td><td>Voicemail and callbacks</td><td>Slow correction cycles after a failed inspection</td><td>Structured pass/fail with required corrections visible to the GC instantly</td><td>Inspection Coordination (Section 6-I)</td></tr>
+        <tr><td>Incomplete documentation</td><td>Photo/document requirements aren't standardized or attached to the request</td><td>Inspector requests documents on-site, delays the visit</td><td>Failed or rescheduled inspections</td><td>Required-document checklist enforced before a request can be submitted</td><td>Inspection request validation</td></tr>
+        <tr><td>Permit milestones disconnected from construction schedule</td><td>Permitting software and scheduling software have never talked to each other</td><td>Contractor manually tracks both and cross-references</td><td>Work starts before permit approval, or stalls after approval unnecessarily</td><td>Permit status becomes a real gate on schedule tasks</td><td>ADUFlow integration (Sections 10 &amp; 14)</td></tr>
+        <tr><td>Manual status updates</td><td>No system pushes status automatically to the other side</td><td>Phone calls both directions</td><td>Slow, error-prone, hard to audit later</td><td>Status changes propagate automatically with an audit trail</td><td>Audit log + notification system (Section 15)</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="eyebrow">03 · Product Positioning</div>
+      <h2>A coordination operating system, not a calendar</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h4>Product category</h4>
+          <p>Trade Coordination OS for construction — the connective layer between estimating, scheduling, trades, materials, inspections, and clients.</p>
+        </div>
+        <div class="card">
+          <h4>Positioning statement</h4>
+          <p>For general contractors and builders who lose days to missed handoffs and phone tag, [Product] is the coordination operating system that automatically keeps every trade, supplier, inspector, and homeowner in sync — unlike scheduling apps and generic PM tools, which manage dates and tasks but not the dependencies between them.</p>
+        </div>
+      </div>
+
+      <h3>Tagline options</h3>
+      <ul>
+        <li>"The schedule that tells the next trade when to show up."</li>
+        <li>"Stop being the phone call. Be the contractor."</li>
+        <li>"Every handoff, covered — automatically."</li>
+        <li>"Coordination, not calendars."</li>
+      </ul>
+
+      <h3>Homepage hero copy</h3>
+      <p><strong>Headline:</strong> "Nobody should find out a job is delayed by showing up to an empty site."<br>
+      <strong>Subhead:</strong> [Product] connects your estimate, schedule, trades, materials, and inspections into one system — so when something changes, everyone who needs to know already does.</p>
+
+      <h3>Main value proposition</h3>
+      <p>Every other tool in this space asks the GC to keep managing coordination manually and just gives them a nicer place to write it down. This product removes the manual coordination step itself: dependencies are modeled once, and the system derives who needs to know what, every time something changes.</p>
+
+      <h3>Differentiation messaging</h3>
+      <div class="grid-3">
+        <div class="card"><h4>vs. scheduling apps</h4><p>A calendar app schedules dates. It has no concept of "this can't start until that inspection passes." This product's core unit is the dependency, not the date.</p></div>
+        <div class="card"><h4>vs. project management software</h4><p>PM tools (Asana, Monday) manage the GC's internal tasks. They have no native model of an external trade accepting/declining work, or a homeowner-facing view. This product is built for the three-sided relationship: GC, trade, client.</p></div>
+        <div class="card"><h4>vs. calendar tools</h4><p>Calendars show the plan. They can't detect that the plan is already broken (double-booked crew, late material, unapproved permit). Detection and automatic re-propagation is the product.</p></div>
+      </div>
+
+      <div class="callout">
+        <div class="cap">Why this fits with Drawliner and ADUFlow</div>
+        Drawliner produces the quantities that should drive realistic task durations; ADUFlow produces the permit and municipality status that should gate the schedule. Neither currently has anywhere to feed that data <em>into</em> — this product is that destination, and it becomes measurably better every time a project runs through all three.
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s4">
+      <div class="eyebrow">04 · Core Workflow Design</div>
+      <h2>Job Created → Project Complete</h2>
+      <p class="lede">Fourteen steps, each with a clear system action, a human in the loop wherever the action is customer-facing or high-impact, and an explicit failure mode with a safeguard.</p>
+
+      <div class="table-wrap"><table>
+        <tr><th>#</th><th>Step</th><th>Primary user</th><th>System action</th><th>Trigger</th><th>Output</th><th>Failure risk</th><th>Fix / safeguard</th></tr>
+        <tr><td class="num">1</td><td>Job Created</td><td>GC / Estimator</td><td>Creates project record, links client &amp; address</td><td>Manual entry or CRM import</td><td>Empty project shell</td><td>Duplicate/incomplete records</td><td>Address + client dedup check on create</td></tr>
+        <tr><td class="num">2</td><td>Estimate Accepted</td><td>Client</td><td>Converts estimate line items into scope + budget</td><td>Client signs/accepts estimate</td><td>Scope of work attached to project</td><td>Estimate line items don't map cleanly to trades</td><td>Manual trade-mapping review before schedule generation (Section 6-B)</td></tr>
+        <tr><td class="num">3</td><td>Schedule Auto-Generated</td><td>System / PM</td><td>Runs Smart Scheduler against scope, durations, dependencies</td><td>Estimate acceptance event</td><td>Draft baseline schedule</td><td>Unrealistic durations, wrong sequencing</td><td>PM must approve baseline before it goes live (Section 7)</td></tr>
+        <tr><td class="num">4</td><td>Trades Invited</td><td>PM / Superintendent</td><td>Sends scope, drawings, address, dates to matched trades</td><td>Schedule task reaches "needs trade" state</td><td>Invitation sent, pending response</td><td>No trade available in the window</td><td>Auto-suggest next available trade or alternate date</td></tr>
+        <tr><td class="num">5</td><td>Trade Accepts</td><td>Trade owner</td><td>Locks the trade to the task and date</td><td>Trade responds accept / decline / propose alternate</td><td>Confirmed assignment</td><td>Trade accepts but doesn't actually have crew capacity</td><td>Crew confirmation step before final lock (Section 8)</td></tr>
+        <tr><td class="num">6</td><td>Materials Ordered</td><td>PM / Supplier</td><td>Links material order + delivery date to the task as a dependency</td><td>Task confirmed, lead-time trigger</td><td>Delivery date attached to task</td><td>Order placed late relative to task start</td><td>Auto-flag orders that don't leave enough lead time (Section 9)</td></tr>
+        <tr><td class="num">7</td><td>Trade Arrives</td><td>Crew</td><td>Records check-in, timestamp, optional site confirmation</td><td>Crew opens task on arrival</td><td>"On site" status visible to GC/client</td><td>No check-in recorded</td><td>Missed check-in alert to PM after grace period</td></tr>
+        <tr><td class="num">8</td><td>Work Completed</td><td>Crew</td><td>Marks task complete with photos/notes</td><td>Crew taps "mark complete"</td><td>Task closed, evidence attached</td><td>Marked complete but not actually done</td><td>PM spot-check + client visibility creates accountability</td></tr>
+        <tr><td class="num">9</td><td>Inspection Requested</td><td>PM</td><td>Submits inspection request with required documentation</td><td>Task type requires inspection</td><td>Inspection request logged</td><td>Missing required documents</td><td>Checklist validation before submission (Section 10)</td></tr>
+        <tr><td class="num">10</td><td>Inspection Passed</td><td>Inspector</td><td>Records pass/fail result</td><td>Inspector completes visit</td><td>Gate opens (or correction task created)</td><td>Assuming "passed" without confirmation</td><td>Never auto-advance without an explicit recorded result (Section 10)</td></tr>
+        <tr><td class="num">11</td><td>Next Trade Auto-Notified</td><td>System</td><td>Notifies the next trade in sequence that their dependency is cleared</td><td>Predecessor task + inspection both clear</td><td>Next trade invited/confirmed</td><td>Notifying too early (dependency not actually clear)</td><td>Hard gate: notification requires all listed dependencies closed</td></tr>
+        <tr><td class="num">12</td><td>Client Updated</td><td>System / PM</td><td>Sends plain-language milestone update</td><td>Milestone task completed</td><td>Homeowner notified</td><td>Jargon-heavy or poorly timed message</td><td>Human-reviewable AI-drafted copy, PM approves (Section 12)</td></tr>
+        <tr><td class="num">13</td><td>Project Complete</td><td>PM</td><td>Closes project, archives documentation</td><td>All tasks + inspections closed</td><td>Final record, punch list resolved</td><td>Loose ends not tracked</td><td>Completion checklist required before close</td></tr>
+        <tr><td class="num">14</td><td>Completion Data Feeds Back</td><td>System</td><td>Actual durations/delays feed future estimating assumptions</td><td>Project closed</td><td>Improved duration models for future schedules</td><td>Bad data (rushed closes) pollutes future estimates</td><td>Only feed back verified, complete project records</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s5">
+      <div class="eyebrow">05 · User Roles &amp; Permissions</div>
+      <h2>Eleven roles, one shared record</h2>
+      <p class="lede">Every role sees the same underlying project record; permissions control which slice they see and what they can change — not a separate database per role.</p>
+
+      <div class="table-wrap"><table>
+        <tr><th>Role</th><th>Main goal</th><th>Views</th><th>Can edit</th><th>Can approve</th><th>Key notifications</th><th>Mobile actions</th><th>Restrictions</th></tr>
+        <tr><td>GC / Builder Owner</td><td>Projects run on time and on budget</td><td>All projects, all financials</td><td>Everything within their org</td><td>Schedule changes, payouts, user access</td><td>At-risk projects, no-shows, failed inspections</td><td>Full dashboard, approvals</td><td>Cannot see other orgs' data</td></tr>
+        <tr><td>Project Manager</td><td>Day-to-day coordination of one or more active projects</td><td>Assigned projects, all trades/materials/inspections on them</td><td>Schedule, trade invites, material orders</td><td>Reschedules, client message drafts</td><td>All task-level events on their projects</td><td>Full task management</td><td>Cannot edit org billing/users</td></tr>
+        <tr><td>Superintendent</td><td>What's happening on site, today and tomorrow</td><td>Site-level daily/weekly view</td><td>Check-ins, delay/issue reports</td><td>Site-level task completion</td><td>Arrivals, no-shows, safety issues</td><td>Site plan, crew status, photo upload</td><td>Read-only on budget/estimate</td></tr>
+        <tr><td>Estimator</td><td>Accurate estimates that convert cleanly to schedules</td><td>Estimates, takeoffs, historical durations</td><td>Estimate line items, cost codes</td><td>Estimate-to-schedule mapping</td><td>Completion data affecting duration models</td><td>Minimal — mostly desk role</td><td>Cannot edit live schedules directly</td></tr>
+        <tr><td>Trade / Subcontractor Owner</td><td>A full, predictable pipeline of confirmed work</td><td>Their own invitations, jobs, calendar</td><td>Their availability, crew assignment</td><td>Accept/decline/propose-alternate</td><td>New invitations, schedule changes, materials ready</td><td>Full mobile flow (Section 11)</td><td>Cannot see other trades' pricing or other projects</td></tr>
+        <tr><td>Crew Member</td><td>Know where to go and what to do, report back fast</td><td>Today's task only</td><td>Check-in/out, photos, delay/issue reports</td><td>Nothing — reports flow to trade owner/PM</td><td>Today's assignment, schedule changes</td><td>Entire mobile flow is built for this role</td><td>No access to pricing, other projects, or admin</td></tr>
+        <tr><td>Supplier</td><td>Deliver on time, get paid, avoid blame for delays</td><td>Their own orders and delivery schedule</td><td>Delivery date, delivery status</td><td>Nothing project-side</td><td>Order created, schedule-impacting delay requests</td><td>Update delivery status, upload proof of delivery</td><td>Cannot see project schedule beyond their own deliveries</td></tr>
+        <tr><td>Inspector</td><td>Efficient inspection schedule, clear documentation</td><td>Their assigned inspections</td><td>Pass/fail result, required corrections</td><td>Inspection pass/fail (authoritative)</td><td>New requests, corrected re-submissions</td><td>Record result, attach notes/photos</td><td>Cannot see budget or unrelated project data</td></tr>
+        <tr><td>Municipality User</td><td>Track permit/inspection compliance across contractors</td><td>Permit and inspection status for their jurisdiction</td><td>Permit status (if integrated)</td><td>Permit approval (authoritative, external system)</td><td>New permit submissions</td><td>N/A — desk role</td><td>No visibility into unrelated project data (cost, trades)</td></tr>
+        <tr><td>Homeowner / Client</td><td>Know what's happening and when crews arrive</td><td>Their project timeline, upcoming visits, photos</td><td>Communication preferences only</td><td>Change orders (if offered)</td><td>Milestones, delays, upcoming crew visits</td><td>Simple read-mostly dashboard</td><td>No visibility into trade pricing, other clients, or internal notes</td></tr>
+        <tr><td>Admin / Support User</td><td>Keep the platform running, help users unblock issues</td><td>Cross-org technical/operational data (not project financials)</td><td>User accounts, integration configs</td><td>Nothing project-specific</td><td>Failed notifications, integration errors</td><td>N/A</td><td>Access to project content should be logged and time-boxed</td></tr>
+      </table></div>
+
+      <div class="callout">
+        <div class="cap">Security note</div>
+        The two highest-risk permission boundaries are: (1) trades must never see another trade's pricing or another project's data, and (2) support/admin access to a customer's project content should be logged, scoped, and time-limited — not standing access.
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s6">
+      <div class="eyebrow">06 · Function-by-Function Product Blueprint</div>
+      <h2>Fourteen functions, one dependency graph</h2>
+      <p class="lede">This is the master index of every function in the platform. Functions C, E/F, H, I, L/M, and N get full treatment in their own sections (linked); A, B, D, G, J, and K are detailed here since they don't otherwise get a dedicated section.</p>
+
+      <div class="table-wrap"><table>
+        <tr><th>Fn</th><th>Function</th><th>Main users</th><th>Priority</th><th>Detail</th></tr>
+        <tr><td class="mono">A</td><td>Job &amp; Project Creation</td><td>GC, Estimator</td><td><span class="tag tag-mvp">MVP</span></td><td>Below</td></tr>
+        <tr><td class="mono">B</td><td>Estimate-to-Schedule Conversion</td><td>Estimator, PM</td><td><span class="tag tag-v1">V1</span></td><td>Below</td></tr>
+        <tr><td class="mono">C</td><td>Smart Scheduler</td><td>PM, System</td><td><span class="tag tag-v1">V1</span></td><td><a href="#s7">Section 7</a></td></tr>
+        <tr><td class="mono">D</td><td>Trade Invitations</td><td>PM, Trade owner</td><td><span class="tag tag-mvp">MVP</span></td><td>Below</td></tr>
+        <tr><td class="mono">E</td><td>Trade Availability</td><td>Trade owner</td><td><span class="tag tag-mvp">MVP</span></td><td><a href="#s8">Section 8</a></td></tr>
+        <tr><td class="mono">F</td><td>Crew Tracking</td><td>Crew member</td><td><span class="tag tag-mvp">MVP</span></td><td><a href="#s8">Section 8</a></td></tr>
+        <tr><td class="mono">G</td><td>Drawing &amp; Document Access</td><td>Trade, Crew, PM</td><td><span class="tag tag-v1">V1</span></td><td>Below</td></tr>
+        <tr><td class="mono">H</td><td>Material Delivery Coordination</td><td>PM, Supplier</td><td><span class="tag tag-v2">V2</span></td><td><a href="#s9">Section 9</a></td></tr>
+        <tr><td class="mono">I</td><td>Inspection Coordination</td><td>PM, Inspector</td><td><span class="tag tag-v2">V2</span></td><td><a href="#s10">Section 10</a></td></tr>
+        <tr><td class="mono">J</td><td>Client / Homeowner Communication</td><td>Homeowner, PM</td><td><span class="tag tag-mvp">MVP</span></td><td>Below</td></tr>
+        <tr><td class="mono">K</td><td>Notifications &amp; Alerts</td><td>All roles</td><td><span class="tag tag-mvp">MVP</span></td><td>Below</td></tr>
+        <tr><td class="mono">L</td><td>AI Conflict Detection</td><td>PM, System</td><td><span class="tag tag-adv">Advanced</span></td><td><a href="#s12">Section 12</a></td></tr>
+        <tr><td class="mono">M</td><td>AI Assistant</td><td>GC, PM</td><td><span class="tag tag-adv">Advanced</span></td><td><a href="#s12">Section 12</a></td></tr>
+        <tr><td class="mono">N</td><td>Dashboard</td><td>All roles</td><td><span class="tag tag-mvp">MVP</span></td><td><a href="#s13">Section 13</a></td></tr>
+      </table></div>
+
+      <h3>A. Job &amp; Project Creation</h3>
+      <p><strong>Purpose:</strong> establish the single record everything else attaches to. <strong>Problem solved:</strong> project data currently starts scattered (CRM, email, memory) and never converges.</p>
+      <p><strong>Workflow:</strong> create manually or from an accepted estimate → link client/homeowner → link address (validated, structured) → link drawings → link scope of work → link budget → link permit status (if applicable) → assign PM → generate baseline schedule.</p>
+      <p><strong>Required fields:</strong> project name, address, client contact, project type, start-date target. <strong>Edge cases:</strong> multi-unit or multi-address projects (e.g., subdivisions); re-opening a "complete" project for warranty work.<br><strong>Success metric:</strong> time from "estimate accepted" to "baseline schedule exists," target under 5 minutes.</p>
+
+      <h3>B. Estimate-to-Schedule Conversion</h3>
+      <p><strong>Purpose:</strong> turn what was priced into what gets built and when, without manual re-entry. <strong>Problem solved:</strong> estimates and schedules are built by different people in different tools today, so they silently drift apart.</p>
+      <p><strong>Workflow:</strong> estimate accepted → scope line items become project tasks → takeoff quantities (from Drawliner, if connected) generate estimated durations via a duration-per-unit model → cost codes map to schedule activities → trade categories map to available subcontractors → dependencies are generated from a standard sequencing template per project type → materials are identified per task → inspection milestones are inserted at the correct points → critical path is calculated.</p>
+      <div class="callout"><div class="cap">Edge case</div>Line items that don't map cleanly to a standard trade/sequence template (custom scope, unusual project types) must fall back to a manual sequencing step — never silently guess a dependency order.</div>
+      <p><strong>Success metric:</strong> % of estimate line items that convert to a scheduled task without manual correction.</p>
+
+      <h3>D. Trade Invitations</h3>
+      <p><strong>Purpose:</strong> replace the "call the sub and hope" step with a trackable, binding invitation. <strong>Problem solved:</strong> verbal commitments aren't confirmed, aren't logged, and give the GC no fallback plan when they fall through.</p>
+      <p><strong>Workflow:</strong> invite trade to task → send scope, drawings, address, and site instructions in the same invite → trade accepts, declines, or proposes an alternate date → GC approves or counters the alternate → trade confirms crew capacity for that date → confirmation propagates to PM, superintendent, and (if it's the next trade in sequence) the previous trade who was waiting on this handoff.</p>
+      <p><strong>UX requirement:</strong> a trade should be able to accept a straightforward invite in under 15 seconds from a push notification, without opening a full app session.<br><strong>Edge case:</strong> invitation expires with no response — must auto-escalate to a backup trade or alert the PM, never sit silently.<br><strong>Success metric:</strong> median time-to-accept; % of invitations that expire unanswered.</p>
+
+      <h3>G. Drawing &amp; Document Access</h3>
+      <p><strong>Purpose:</strong> make "which version is current" a solved problem. <strong>Problem solved:</strong> drawings emailed once go stale silently after revisions; trades work from outdated PDFs.</p>
+      <p><strong>Workflow:</strong> drawings link to specific tasks, not just the project → viewing always resolves to the latest revision → prior revisions remain in version history for reference → a task shows a hard warning if no drawing is linked at all → offline caching for the current task's drawing so a trade isn't stuck without signal on site.</p>
+      <p><strong>Integration:</strong> Bluebeam Revu and Drawliner as source-of-truth for takeoffs/markups; this platform is a consumer/viewer, not a competing markup tool in V1.<br><strong>Edge case:</strong> a revision lands mid-task — the trade already on site needs an explicit "drawing updated" alert, not a silent swap.<br><strong>Success metric:</strong> rework incidents attributable to outdated drawings (target: trend to zero).</p>
+
+      <h3>J. Client / Homeowner Communication</h3>
+      <p><strong>Purpose:</strong> make "the homeowner already knows" the default state, not something the GC has to remember. <strong>Problem solved:</strong> today, communication quality depends entirely on the GC's bandwidth on a given day.</p>
+      <p><strong>Workflow:</strong> homeowner dashboard shows project timeline, upcoming crew visits, milestones completed with photos, and current delays → milestone completion auto-drafts a plain-language update → PM reviews/edits/approves before it sends (never fully automatic to a client, see Section 12 safeguards) → homeowner sets communication preference (SMS, email, or both) and frequency.</p>
+      <p><strong>Edge case:</strong> bad news (a real delay) needs faster, more direct notice than routine milestones — don't batch a delay into a weekly digest.<br><strong>Success metric:</strong> inbound "what's happening" calls/texts per project, trending down.</p>
+
+      <h3>K. Notifications &amp; Alerts</h3>
+      <p><strong>Purpose:</strong> the mechanism that actually replaces the phone call. <strong>Problem solved:</strong> today, "telling people" is a manual, error-prone, one-at-a-time act.</p>
+      <div class="table-wrap"><table>
+        <tr><th>Event</th><th>Recipient(s)</th><th>Channel</th><th>Urgency</th></tr>
+        <tr><td>Trade assignment confirmed</td><td>Trade owner, PM</td><td>Push + SMS</td><td>Normal</td></tr>
+        <tr><td>Schedule change</td><td>Affected trades only, PM</td><td>Push + SMS</td><td>High</td></tr>
+        <tr><td>Delay reported</td><td>PM, downstream trades, homeowner</td><td>Push + SMS</td><td>High</td></tr>
+        <tr><td>Weather risk to scheduled work</td><td>PM, affected trades</td><td>Push</td><td>Medium</td></tr>
+        <tr><td>Inspection reminder</td><td>PM, inspector</td><td>Push + Email</td><td>Medium</td></tr>
+        <tr><td>Material delivery update</td><td>PM, crew waiting on it</td><td>Push</td><td>Medium/High if blocking</td></tr>
+        <tr><td>Crew checked in / no-show</td><td>PM, superintendent</td><td>Push</td><td>High if no-show</td></tr>
+        <tr><td>Missing drawing detected</td><td>PM, trade</td><td>Push</td><td>High</td></tr>
+        <tr><td>Task marked complete</td><td>PM, next trade in sequence</td><td>Push</td><td>Normal</td></tr>
+        <tr><td>Client milestone update</td><td>Homeowner</td><td>SMS/Email per preference</td><td>Normal</td></tr>
+      </table></div>
+      <p><strong>Safeguard:</strong> every SMS notification must be strictly informational/transactional (never blended with marketing content — see the TCPA discussion referenced in the platform's compliance notes) and must honor opt-outs and quiet hours per recipient.</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="eyebrow">07 · Smart Scheduler Design</div>
+      <h2>The engine underneath everything</h2>
+      <p class="lede">The scheduler's job is narrow: turn known facts (scope, durations, dependencies, availability, constraints) into a defensible sequence — and never publish a change without a human seeing what moved and why.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h4>Inputs</h4>
+          <ul style="margin:0;padding-left:18px;font-size:14px;">
+            <li>Project type &amp; scope of work</li>
+            <li>Estimate line items &amp; takeoff quantities</li>
+            <li>Trade durations (historical + takeoff-derived)</li>
+            <li>Task dependencies (predecessor/successor)</li>
+            <li>Crew availability</li>
+            <li>Material availability / lead times</li>
+            <li>Permit status</li>
+            <li>Inspection requirements</li>
+            <li>Weather forecast (for weather-sensitive tasks)</li>
+            <li>Holidays / blackout dates</li>
+            <li>Builder preferences (e.g., no Friday finishes)</li>
+            <li>Client constraints (access windows)</li>
+            <li>Site access restrictions</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Outputs</h4>
+          <ul style="margin:0;padding-left:18px;font-size:14px;">
+            <li>Baseline project schedule</li>
+            <li>Task sequence with dependencies</li>
+            <li>Trade assignments (proposed, pending acceptance)</li>
+            <li>Critical path</li>
+            <li>Start/end dates per task</li>
+            <li>Buffer days around weather/inspection-sensitive tasks</li>
+            <li>Inspection request dates</li>
+            <li>Material delivery windows</li>
+            <li>Notification triggers</li>
+            <li>Delay impact forecast (what a slip does downstream)</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Scheduling logic</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Factor</th><th>Handling rule</th></tr>
+        <tr><td>Dependencies</td><td>Hard gates (task cannot start) vs. soft preferences (should follow, but can overlap) are modeled separately — most construction sequencing is hard-gated.</td></tr>
+        <tr><td>Crew availability</td><td>Scheduler only proposes trades who are marked available for that window; it never force-assigns a busy trade.</td></tr>
+        <tr><td>Trade capacity</td><td>A trade can decline based on crew size vs. scope — capacity is self-reported by the trade, not assumed by the system.</td></tr>
+        <tr><td>Weather-sensitive work</td><td>Exterior/weather-sensitive tasks get an automatic buffer and a forecast check before the confirmed date locks in.</td></tr>
+        <tr><td>Inspections</td><td>Inspection-gated tasks cannot have a downstream start date before the inspection is requested; the actual downstream start is not confirmed until the inspection is recorded as passed.</td></tr>
+        <tr><td>Permits</td><td>No task requiring an active permit can be scheduled to start before permit approval is recorded.</td></tr>
+        <tr><td>Material delivery</td><td>A task cannot show as "ready" until its linked material delivery date has passed or been confirmed on-site.</td></tr>
+        <tr><td>Holidays</td><td>Excluded from availability calculations by default per region/org calendar.</td></tr>
+        <tr><td>Double-booking</td><td>Prevented at the assignment layer — a trade cannot be confirmed on two overlapping tasks across any project in the platform.</td></tr>
+        <tr><td>Manual overrides</td><td>Always allowed, but any override that breaks a hard dependency triggers a visible warning that must be acknowledged before saving.</td></tr>
+        <tr><td>Delays</td><td>A reported delay recalculates every downstream task's proposed dates; it does not silently recalculate confirmed trade assignments without notifying the affected trade.</td></tr>
+        <tr><td>Recalculating future tasks</td><td>Only tasks that are not yet confirmed/in-progress shift automatically; confirmed near-term work requires explicit PM review before changing.</td></tr>
+      </table></div>
+
+      <h3>Required safeguards</h3>
+      <ul>
+        <li>Human approval is required before any schedule change affecting a confirmed trade assignment goes live.</li>
+        <li>Every proposed change shows a plain-language change summary ("Framing pushed 2 days — rough-in inspection was delayed") before publishing.</li>
+        <li>Every affected party is notified specifically, not just "the project changed."</li>
+        <li>Every automatic adjustment is written to an audit log with its triggering event.</li>
+        <li>Manual overrides that violate a hard dependency show an explicit warning naming the dependency being broken.</li>
+        <li>Critical path impact is shown before a change is confirmed, not just after.</li>
+      </ul>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s8">
+      <div class="eyebrow">08 · Trade Availability &amp; Crew Coordination</div>
+      <h2>The trade's side of the handshake</h2>
+
+      <h3>Trade profile</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Field</th><th>Purpose</th></tr>
+        <tr><td>Trade type</td><td>Matches invitations to the right scope (plumbing, electrical, framing, etc.)</td></tr>
+        <tr><td>Service area</td><td>Prevents invitations for jobs outside a trade's realistic radius</td></tr>
+        <tr><td>Crew size</td><td>Feeds capacity checks against task scope/duration</td></tr>
+        <tr><td>Availability calendar</td><td>Source of truth the scheduler reads against — trade-owned, not GC-owned</td></tr>
+        <tr><td>Certifications / license status</td><td>Displayed as a trust signal; not independently verified by the platform (see Section 2 municipality note and Section 17)</td></tr>
+        <tr><td>Insurance status</td><td>Same — displayed, self-reported, not independently verified in MVP</td></tr>
+        <tr><td>Preferred job types</td><td>Improves invitation matching quality over time</td></tr>
+        <tr><td>Contact info</td><td>Required for invitations and check-in escalation</td></tr>
+        <tr><td>Response time (historical)</td><td>Informs which trades to try first when time is tight</td></tr>
+        <tr><td>Reliability score</td><td>Derived from on-time arrival and no-show history; visible to GC, not to other trades</td></tr>
+      </table></div>
+
+      <h3>Trade mobile actions</h3>
+      <p>Accept work · decline work · propose a new date · view address · one-tap navigate · view drawings · view scope · one-tap call superintendent · check in · check out · upload photos · mark task complete · report a delay · request information · request inspection · add notes.</p>
+
+      <h3>Coordination logic</h3>
+      <div class="grid-2">
+        <div class="card"><h4>Preventing double-booking</h4><p>Assignment is a hard lock across the entire platform, not per-project — a trade confirmed on one job cannot be confirmed on an overlapping job anywhere in the system.</p></div>
+        <div class="card"><h4>Handling late trades</h4><p>A grace period after the scheduled start with no check-in triggers a "running late?" nudge to the trade, then an alert to the PM if still unconfirmed.</p></div>
+        <div class="card"><h4>Handling no-shows</h4><p>No check-in by end of the grace window auto-flags a no-show, notifies the PM immediately, and offers one-tap re-invite to a backup trade.</p></div>
+        <div class="card"><h4>Reassigning work</h4><p>Reassignment re-runs the same invitation flow (Function D) with the original scope/drawings/address pre-filled — no re-entry.</p></div>
+        <div class="card"><h4>Notifying downstream trades</h4><p>A no-show or delay immediately re-triggers the "next trade" notification logic in reverse — downstream trades are told to hold, not left to assume the schedule still stands.</p></div>
+        <div class="card"><h4>Keeping it light for trades</h4><p>Accountability comes from visible status (check-in/out, completion), not from forms or approvals — the trade's entire required workflow should fit in under five taps per visit.</p></div>
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s9">
+      <div class="eyebrow">09 · Materials, Delivery &amp; Supplier Coordination</div>
+      <h2>Treating materials as a schedule dependency, not a side purchase order</h2>
+
+      <div class="table-wrap"><table>
+        <tr><th>Material event</th><th>Trigger</th><th>Affected users</th><th>Notification</th><th>Schedule impact</th><th>Required action</th></tr>
+        <tr><td>Material list generated</td><td>Estimate/takeoff accepted</td><td>PM, Estimator</td><td>None (internal)</td><td>None yet</td><td>Confirm supplier per line item</td></tr>
+        <tr><td>Order placed</td><td>PM confirms supplier + quantity</td><td>Supplier, PM</td><td>Order confirmation to supplier</td><td>Delivery window attaches to the dependent task</td><td>None</td></tr>
+        <tr><td>Order confirmed with delivery date</td><td>Supplier responds</td><td>PM</td><td>Push to PM</td><td>Task shows "materials pending" until this date</td><td>Flag if delivery date leaves insufficient lead time</td></tr>
+        <tr><td>Delivery on schedule</td><td>Delivery date reached</td><td>Crew, PM</td><td>Push to crew</td><td>Task unblocked</td><td>Photo proof of delivery</td></tr>
+        <tr><td>Delivery delayed</td><td>Supplier updates status or misses date</td><td>PM, affected trade, homeowner if downstream-visible</td><td>High-urgency push + SMS</td><td>Dependent task and everything downstream recalculates</td><td>PM reviews recalculated schedule before publishing</td></tr>
+        <tr><td>Backorder / long-lead item flagged</td><td>Supplier marks item backordered</td><td>PM, Estimator (for future duration models)</td><td>High-urgency push</td><td>Task pushed until new date confirmed</td><td>PM sources alternate supplier or timeline</td></tr>
+        <tr><td>Delivery issue reported</td><td>Crew reports wrong/damaged materials</td><td>PM, Supplier</td><td>Push to PM and supplier</td><td>Task blocked pending resolution</td><td>Replacement order or on-site resolution</td></tr>
+      </table></div>
+
+      <h3>Handling material-specific realities</h3>
+      <div class="grid-3">
+        <div class="card"><h4>Concrete</h4><p>Weather- and cure-time-sensitive; scheduler should treat pour date as a hard gate with a mandatory cure buffer before the next trade.</p></div>
+        <div class="card"><h4>Framing lumber</h4><p>Price/availability volatility makes early ordering valuable; flag long lead times against the framing start date automatically.</p></div>
+        <div class="card"><h4>Windows</h4><p>Classic long-lead item (often 4-8+ weeks) — should be ordered at estimate acceptance, not at "framing complete."</p></div>
+        <div class="card"><h4>Roofing materials</h4><p>Weather-window sensitive; pair with the weather-aware scheduling logic in Section 7.</p></div>
+        <div class="card"><h4>Drywall</h4><p>Depends on rough-in inspection passing first — model as inspection-gated, not just material-gated.</p></div>
+        <div class="card"><h4>Electrical/plumbing rough-in materials</h4><p>Often trade-supplied rather than GC-ordered; the platform should support "trade brings own materials" as a valid state with no delivery tracking required.</p></div>
+      </div>
+      <p><strong>Long-lead items and backorders:</strong> flagged automatically against required-by date at order time, not discovered later. <strong>Delivery rescheduling:</strong> always re-runs the same dependency recalculation as a task delay (Section 7) — materials are not a separate system from the schedule.</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s10">
+      <div class="eyebrow">10 · Permits, Inspections &amp; Municipality Integration</div>
+      <h2>Where ADUFlow makes this platform hard to copy</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h4>Permit workflow</h4>
+          <p>Submitted → under review → corrections required → approved → (eventually) expired. Documents attach to the permit record. Permit status is a real schedule gate: any task requiring an active permit cannot be scheduled to start before "approved" is recorded (Section 7).</p>
+        </div>
+        <div class="card">
+          <h4>Inspection workflow</h4>
+          <p>Required → requested → scheduled → inspector assigned → passed / failed. A failed inspection creates a correction task automatically and blocks downstream trades until re-inspection passes — it does not just log the failure and move on.</p>
+        </div>
+      </div>
+
+      <h3>Municipality integration as a differentiator</h3>
+      <p>Most competitors treat inspections as a line on a calendar the GC fills in manually. Because ADUFlow already talks to municipalities for permitting, this platform can be the first to make inspection status a <em>live, two-way</em> fact instead of a guess:</p>
+      <ul>
+        <li>Permit status syncs automatically instead of being manually re-checked</li>
+        <li>Inspections can be requested from inside the same tool that holds the schedule</li>
+        <li>A required-inspection checklist is enforced before a request can even be submitted</li>
+        <li>Inspectors and contractors get symmetric notifications from one event, not two separate phone calls</li>
+        <li>Pass/fail automatically updates the schedule — no one has to remember to "go tell the framer"</li>
+        <li>A municipal-facing dashboard (later phase) gives inspectors a queue instead of a voicemail box</li>
+      </ul>
+
+      <div class="callout">
+        <div class="cap">Non-negotiable safeguards</div>
+        Never assume an inspection passed without an explicit recorded result. Never notify the next trade until the pass condition is actually met. Any manual override of a gate must be logged with who and why. A failed inspection must generate a correction task automatically. Homeowner-facing language about inspections must stay non-technical and calm — "inspector asked for one more check on the electrical panel," not "failed 220-volt subpanel clearance inspection."
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s11">
+      <div class="eyebrow">11 · Mobile-First Field App Design</div>
+      <h2>Built for a phone, in gloves, in the sun</h2>
+      <p class="lede">If a crew member can't complete their entire required workflow in a few taps with one hand, they revert to texting — and the whole coordination graph collapses back to phone calls. This is the highest-leverage design surface in the product.</p>
+
+      <h3>Required mobile actions</h3>
+      <p>Accept work · decline work · delay work · view drawings · view address · navigate to site · call superintendent · check in · check out · upload photos · mark complete · add notes · request inspection · report issue · view next task · receive schedule updates.</p>
+
+      <h3>Mobile UX requirements</h3>
+      <ul>
+        <li>Large touch targets — designed for gloved hands and quick glances, not precision tapping</li>
+        <li>Minimal typing — status changes, photos, and taps do almost all the work; free text is optional, never required to proceed</li>
+        <li>Offline tolerance — the current task's drawing, address, and instructions cache locally; check-in/out and photos queue and sync when signal returns</li>
+        <li>Fast loading — today's task list is the first thing rendered, before anything else fetches</li>
+        <li>Simple task list — one list, one obvious next action per item, no nested navigation to find "what do I do"</li>
+        <li>Clear status labels in plain language ("Waiting on inspection," not "Blocked: dependency unresolved")</li>
+        <li>Photo upload as a first-class, one-tap action from the task screen itself</li>
+        <li>Voice note option for delay/issue reports, for crews who'd rather talk than type</li>
+        <li>One-tap navigation handoff to the phone's native maps app</li>
+        <li>One-tap call to the superintendent or PM, no dialing</li>
+        <li>SMS fallback for any push notification, since field connectivity and OS permissions are unreliable</li>
+        <li>A single, unmistakable "what do I do next" screen as the app's home state</li>
+      </ul>
+
+      <h3>Mobile screen map</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Screen</th><th>Primary content</th><th>Primary action</th></tr>
+        <tr><td>Trade home screen</td><td>Today's job(s), pending invitations, next task preview</td><td>Tap into today's job</td></tr>
+        <tr><td>Job detail screen</td><td>Address, contact, scope summary, schedule for this job</td><td>Navigate / call / open task</td></tr>
+        <tr><td>Task detail screen</td><td>Scope, drawing thumbnail, dependency status, required materials</td><td>Check in</td></tr>
+        <tr><td>Drawing view</td><td>Latest revision, zoom/pan, offline-cached</td><td>Confirm viewed (optional)</td></tr>
+        <tr><td>Check-in / check-out flow</td><td>Timestamp confirmation, optional site-condition note</td><td>Confirm arrival / departure</td></tr>
+        <tr><td>Completion report</td><td>Photo capture, short notes, request inspection toggle</td><td>Mark complete</td></tr>
+        <tr><td>Delay report</td><td>Reason selector (weather, access, predecessor not done, other), photo, notes</td><td>Submit delay</td></tr>
+        <tr><td>Inspection request</td><td>Required-document checklist, submit button</td><td>Request inspection</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s12">
+      <div class="eyebrow">12 · AI Assistant &amp; Automation Strategy</div>
+      <h2>AI proposes. A human still decides anything that touches a client or a schedule commitment.</h2>
+
+      <h3>AI use cases</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Use case</th><th>User value</th><th>Required data</th><th>Complexity</th><th>Risk</th><th>Human review</th><th>Phase</th></tr>
+        <tr><td>Schedule conflict detection</td><td>Catches double-bookings/bad sequencing before they cause a no-show</td><td>Full schedule graph + trade calendars</td><td>Medium</td><td>Medium (false positives erode trust)</td><td>Flagged, not auto-resolved</td><td><span class="tag tag-v2">V2</span></td></tr>
+        <tr><td>Critical path explanation</td><td>GC understands why a date matters instead of just seeing a red flag</td><td>Schedule graph</td><td>Low</td><td>Low</td><td>Informational only</td><td><span class="tag tag-v2">V2</span></td></tr>
+        <tr><td>Delay impact prediction</td><td>Shows downstream consequences before confirming a change</td><td>Schedule graph + historical delay data</td><td>Medium</td><td>Medium (bad prediction looks authoritative)</td><td>Shown as a range/estimate, not a promise</td><td><span class="tag tag-adv">Advanced</span></td></tr>
+        <tr><td>Trade availability matching</td><td>Faster invites to the right trade first</td><td>Trade profiles + availability</td><td>Low</td><td>Low</td><td>Ranked suggestions, PM still sends invite</td><td><span class="tag tag-v1">V1</span></td></tr>
+        <tr><td>Missing information / drawing detection</td><td>Catches a task about to start with no drawing linked</td><td>Task + document records</td><td>Low</td><td>Low</td><td>Auto-alert, no auto-fix</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Permit/inspection dependency warnings</td><td>Prevents scheduling work before its legal gate clears</td><td>Permit/inspection status</td><td>Medium</td><td>High if wrong (legal/safety exposure)</td><td>Hard-blocked, not just warned, until status confirmed</td><td><span class="tag tag-v2">V2</span></td></tr>
+        <tr><td>Weather delay suggestions</td><td>Proactive reschedule proposals ahead of bad weather</td><td>Weather API + task sensitivity flags</td><td>Medium</td><td>Medium</td><td>PM approves before trades are notified</td><td><span class="tag tag-v2">V2</span></td></tr>
+        <tr><td>Material delay impact</td><td>Shows what a late delivery actually blocks</td><td>Material orders + schedule graph</td><td>Medium</td><td>Medium</td><td>PM approves before republishing schedule</td><td><span class="tag tag-v2">V2</span></td></tr>
+        <tr><td>Natural-language schedule control</td><td>"Move all exterior work because of rain" instead of manual edits</td><td>Full schedule graph + NLU</td><td>High</td><td>High (broad, high-impact action from one sentence)</td><td>Always previews the proposed change set before applying</td><td><span class="tag tag-adv">Advanced</span></td></tr>
+        <tr><td>Project risk summary</td><td>Daily "what needs your attention" digest</td><td>Cross-project status data</td><td>Medium</td><td>Low</td><td>Informational</td><td><span class="tag tag-v2">V2</span></td></tr>
+        <tr><td>Daily GC briefing</td><td>Saves the morning "what's happening today" scan</td><td>Cross-project status data</td><td>Low</td><td>Low</td><td>Informational</td><td><span class="tag tag-v1">V1</span></td></tr>
+        <tr><td>Homeowner-friendly update drafting</td><td>Removes jargon and saves PM time drafting updates</td><td>Milestone/task data + tone guidelines</td><td>Medium</td><td>High if sent unreviewed (wrong tone, wrong facts)</td><td>PM must approve/send — never auto-sent to a client</td><td><span class="tag tag-v1">V1</span></td></tr>
+      </table></div>
+
+      <h3>Supported AI commands (examples)</h3>
+      <p class="mono" style="font-size:13.5px;line-height:2;">"Who is on site tomorrow?" · "What jobs are at risk this week?" · "Move all exterior work because of rain." · "What trades are waiting on inspection?" · "Which crews have not checked in?" · "Show all delayed projects." · "Notify electrician that framing is complete." · "Draft homeowner update for the delay." · "What material deliveries are late?" · "Show critical path for the ADU project."</p>
+
+      <div class="callout">
+        <div class="cap">AI safeguards — non-negotiable</div>
+        Human approval is required before any schedule change reaches trades, and before any message reaches a client. Every AI recommendation states why it's being made. Uncertainty is shown, never hidden — "likely" and "confirmed" must look different in the UI. Every AI action is logged and reversible. AI respects the same permission boundaries as a human user. AI never invents a permit or inspection status it hasn't received from an authoritative source. AI never assumes crew availability without a confirmed record.
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s13">
+      <div class="eyebrow">13 · Dashboard &amp; Reporting</div>
+      <h2>Four roles, four different jobs to be done</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h4>General Contractor Dashboard</h4>
+          <p>Today's jobs · crews on site · late jobs · missing/unconfirmed trades · upcoming and failed inspections · weather alerts · material deliveries (and delays) · critical path · overall completion % · trades awaiting confirmation · client updates sent vs. pending.</p>
+        </div>
+        <div class="card">
+          <h4>Trade Dashboard</h4>
+          <p>Upcoming jobs · accepted jobs · pending invitations · today's site address · drawings · scope · site contact · check-in/check-out · completion reporting · payment status if the platform tracks it.</p>
+        </div>
+        <div class="card">
+          <h4>Homeowner Dashboard</h4>
+          <p>Project status in plain language · next scheduled crew and arrival window · milestones completed with photos · current delays · upcoming inspections · clear next steps · a way to reach the GC.</p>
+        </div>
+        <div class="card">
+          <h4>Admin Dashboard</h4>
+          <p>Active projects across the org · users and access · failed notifications · integration errors · delayed projects · manual review queue · audit logs · support issues.</p>
+        </div>
+      </div>
+
+      <div class="callout"><div class="cap">Design principle</div>A dashboard is scanned, not read. Every card should answer "does this need my attention right now" at a glance — state (on track / at risk / blocked) belongs in color and shape, not just in a number buried in a table.</div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s14">
+      <div class="eyebrow">14 · Integration Strategy</div>
+      <h2>The ecosystem is the moat</h2>
+
+      <div class="table-wrap"><table>
+        <tr><th>Integration</th><th>Purpose</th><th>Data exchanged</th><th>Trigger events</th><th>MVP?</th><th>Complexity</th><th>Phase</th></tr>
+        <tr><td>Drawliner</td><td>Takeoffs and estimating feed realistic task durations</td><td>Quantities, cost codes, drawings</td><td>Estimate accepted</td><td>No</td><td>Medium</td><td>Phase 4</td></tr>
+        <tr><td>ADUFlow</td><td>Permitting/municipality status gates the schedule</td><td>Permit status, inspection milestones</td><td>Permit submitted/approved</td><td>No</td><td>Medium-High</td><td>Phase 4</td></tr>
+        <tr><td>QuickBooks</td><td>Accounting sync for invoicing/cost tracking</td><td>Cost codes, invoices</td><td>Task/milestone billing events</td><td>No</td><td>Medium</td><td>Phase 4</td></tr>
+        <tr><td>Procore</td><td>Enterprise PM interop for larger builders already on Procore</td><td>Schedule, documents</td><td>Two-way sync</td><td>No</td><td>High</td><td>Phase 4+</td></tr>
+        <tr><td>Buildertrend</td><td>Residential builder workflow interop</td><td>Schedule, client communication</td><td>Two-way sync</td><td>No</td><td>High</td><td>Phase 4+</td></tr>
+        <tr><td>Bluebeam Revu</td><td>Drawing markup source-of-truth</td><td>Drawing files, markups</td><td>Drawing published/revised</td><td>No</td><td>Medium</td><td>Phase 3</td></tr>
+        <tr><td>Calendar apps (Google/Outlook)</td><td>Trades/PMs see schedule in the calendar they already use</td><td>Task dates</td><td>Task scheduled/changed</td><td>Yes (basic export)</td><td>Low</td><td>Phase 1</td></tr>
+        <tr><td>Email</td><td>Notification fallback channel</td><td>Notification content</td><td>Any notification event</td><td>Yes</td><td>Low</td><td>Phase 1</td></tr>
+        <tr><td>SMS</td><td>Primary trade/client notification channel</td><td>Notification content</td><td>Any notification event</td><td>Yes</td><td>Low-Medium (10DLC registration)</td><td>Phase 1</td></tr>
+        <tr><td>Weather APIs</td><td>Weather-aware scheduling</td><td>Forecast data by site location</td><td>Daily refresh</td><td>No</td><td>Low</td><td>Phase 2</td></tr>
+        <tr><td>Supplier/material systems</td><td>Delivery status without manual updates</td><td>Order status, delivery dates</td><td>Order placed/updated</td><td>No</td><td>Medium-High (varies by supplier)</td><td>Phase 3</td></tr>
+        <tr><td>CRM systems</td><td>Import leads/clients without re-entry</td><td>Client contact, project origin</td><td>Job creation</td><td>No</td><td>Low-Medium</td><td>Phase 3</td></tr>
+      </table></div>
+
+      <h3>Ecosystem data loop</h3>
+      <p>Drawliner takeoff generates quantities → quantities inform estimating assumptions → the estimate generates project scope and the baseline schedule → ADUFlow permit status gates schedule milestones → the Smart Scheduler assigns trades → trades update field progress → completion data (actual vs. estimated durations) improves future duration models → improved models make every subsequent estimate and schedule more accurate. Each pass through this loop makes the next project's plan better — a compounding advantage a standalone scheduling tool never accumulates.</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s15">
+      <div class="eyebrow">15 · Data Model &amp; System Architecture</div>
+      <h2>The record every role reads from</h2>
+
+      <div class="table-wrap"><table>
+        <tr><th>Entity</th><th>Purpose</th><th>Key fields</th><th>Relationships</th></tr>
+        <tr><td>Organization</td><td>The GC/builder account boundary</td><td>Name, plan tier, region</td><td>Has many Users, Projects</td></tr>
+        <tr><td>User</td><td>Any person accessing the platform</td><td>Name, contact, role(s)</td><td>Belongs to Organization; has Role(s)</td></tr>
+        <tr><td>Role</td><td>Permission set (Section 5)</td><td>Name, permission flags</td><td>Assigned to Users per Project or org-wide</td></tr>
+        <tr><td>Project</td><td>The unifying record for one job</td><td>Address, type, status, budget</td><td>Has Schedule, Tasks, Client, Documents</td></tr>
+        <tr><td>Client / Homeowner</td><td>The party the project is being built for</td><td>Contact info, comms preference</td><td>Belongs to one or more Projects</td></tr>
+        <tr><td>Job Site</td><td>Physical location, may differ from billing address</td><td>Address, access notes, GPS</td><td>Belongs to Project</td></tr>
+        <tr><td>Estimate</td><td>Priced scope prior to acceptance</td><td>Line items, cost codes, totals</td><td>Converts into Project scope + Schedule</td></tr>
+        <tr><td>Takeoff Quantity</td><td>Quantities from Drawliner feeding duration models</td><td>Unit, quantity, cost code</td><td>Belongs to Estimate; informs Task duration</td></tr>
+        <tr><td>Schedule</td><td>The sequenced set of Tasks for a Project</td><td>Baseline vs. current version</td><td>Has many Tasks; belongs to Project</td></tr>
+        <tr><td>Task</td><td>A unit of scheduled work</td><td>Type, dates, status, dependency refs</td><td>Belongs to Schedule; has Assignment, Dependencies, Documents</td></tr>
+        <tr><td>Dependency</td><td>Predecessor/successor relationship between Tasks</td><td>Type (hard/soft), gating condition</td><td>Links two Tasks</td></tr>
+        <tr><td>Trade Company</td><td>A subcontractor business</td><td>Trade type, service area, contact</td><td>Has Crews; receives Assignments</td></tr>
+        <tr><td>Crew</td><td>A team dispatched by a Trade Company</td><td>Size, capacity</td><td>Belongs to Trade Company; has Crew Members</td></tr>
+        <tr><td>Crew Member</td><td>An individual field worker</td><td>Name, contact, role</td><td>Belongs to Crew; performs Check-ins</td></tr>
+        <tr><td>Availability</td><td>Trade-owned calendar of open/busy dates</td><td>Date range, status</td><td>Belongs to Trade Company; read by Scheduler</td></tr>
+        <tr><td>Assignment</td><td>A confirmed Trade-to-Task binding</td><td>Status (invited/accepted/declined/confirmed)</td><td>Links Task and Trade Company</td></tr>
+        <tr><td>Material Order</td><td>A materials purchase tied to a Task</td><td>Items, quantity, delivery date</td><td>Belongs to Task; belongs to Supplier</td></tr>
+        <tr><td>Supplier</td><td>Materials vendor</td><td>Contact, lead-time profile</td><td>Fulfills Material Orders</td></tr>
+        <tr><td>Delivery</td><td>An actual delivery event against an Order</td><td>Status, timestamp, proof photo</td><td>Belongs to Material Order</td></tr>
+        <tr><td>Permit</td><td>A municipal permit record</td><td>Status, jurisdiction, documents</td><td>Belongs to Project; gates Tasks</td></tr>
+        <tr><td>Inspection</td><td>A scheduled or completed inspection</td><td>Type, status, result, required docs</td><td>Belongs to Task/Permit; involves Inspector</td></tr>
+        <tr><td>Document</td><td>Any file (drawing, permit doc, photo)</td><td>Type, version, URL</td><td>Belongs to Project/Task</td></tr>
+        <tr><td>Drawing</td><td>A construction drawing specifically</td><td>Revision number, discipline</td><td>Subtype of Document; linked to Tasks</td></tr>
+        <tr><td>Photo</td><td>Field-captured image</td><td>Timestamp, GPS (optional), caption</td><td>Belongs to Task (completion/delay/delivery evidence)</td></tr>
+        <tr><td>Comment</td><td>Freeform note on a Task or Project</td><td>Author, timestamp, text</td><td>Belongs to Task/Project</td></tr>
+        <tr><td>Notification</td><td>A sent alert record</td><td>Channel, recipient, status, event type</td><td>References the triggering entity</td></tr>
+        <tr><td>Delay Event</td><td>A reported delay and its reason</td><td>Reason, reported by, impact</td><td>Belongs to Task; triggers Schedule recalculation</td></tr>
+        <tr><td>Completion Report</td><td>Evidence a Task is done</td><td>Photos, notes, timestamp</td><td>Belongs to Task</td></tr>
+        <tr><td>AI Recommendation</td><td>A proposed AI action pending human approval</td><td>Type, rationale, confidence, status</td><td>References the affected Task(s)/Project</td></tr>
+        <tr><td>Audit Log</td><td>Immutable record of who/what/when for every change</td><td>Actor, action, timestamp, before/after</td><td>References any entity</td></tr>
+      </table></div>
+
+      <h3>Architecture notes</h3>
+      <div class="grid-2">
+        <div class="card"><h4>Realtime updates</h4><p>Task and Assignment status changes push to affected clients (mobile + dashboard) via a realtime channel — polling alone is too slow for "who's on site right now."</p></div>
+        <div class="card"><h4>Notification system</h4><p>A single notification service owns channel selection (push/SMS/email), quiet-hours and opt-out logic, and delivery retries — not duplicated per feature.</p></div>
+        <div class="card"><h4>Audit trail</h4><p>Every automated schedule change, AI recommendation acceptance, and permission-sensitive action writes to the Audit Log — this is what makes "why did this change" answerable months later.</p></div>
+        <div class="card"><h4>Offline mobile</h4><p>Current-task data (drawing, address, scope) caches locally; check-in/out, photos, and reports queue locally and sync on reconnect, with conflict resolution favoring the field-reported timestamp.</p></div>
+        <div class="card"><h4>Data sync &amp; integration architecture</h4><p>External integrations (Drawliner, ADUFlow, QuickBooks, suppliers) go through a dedicated integration layer with per-source retry/backoff — a slow or down third party should degrade a feature, not the core app.</p></div>
+        <div class="card"><h4>API-first approach</h4><p>Core actions (create task, accept assignment, report delay, request inspection) are exposed as a stable API from day one — the mobile app and web dashboard are both just clients of it, and it's what future ecosystem integrations plug into.</p></div>
+      </div>
+      <p><strong>Security and privacy:</strong> role-scoped data access enforced at the API layer (not just hidden in the UI), least-privilege admin access with logging, and encryption in transit and at rest for anything containing client PII or financial data.</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s16">
+      <div class="eyebrow">16 · MVP Scope</div>
+      <h2>Coordination first. Everything else is later.</h2>
+      <p class="lede"><strong>MVP goal:</strong> help small-to-mid-size contractors coordinate trades, reduce phone calls, prevent missed handoffs, and keep homeowners informed — nothing more ambitious than that yet.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h4>MVP must-have features</h4>
+          <ul style="margin:0;padding-left:18px;font-size:14px;">
+            <li>Project/job creation</li>
+            <li>Basic schedule with task dependencies</li>
+            <li>Trade invitations with accept/decline</li>
+            <li>Simple trade availability calendar</li>
+            <li>SMS/email notifications (TCPA-compliant from day one)</li>
+            <li>Mobile task view for trades/crews</li>
+            <li>Check-in / check-out</li>
+            <li>Mark complete with photos</li>
+            <li>Basic delay reporting</li>
+            <li>Automatic next-trade notification</li>
+            <li>Homeowner status updates</li>
+            <li>GC dashboard (today / tomorrow / late)</li>
+            <li>Basic audit log</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Explicitly out of scope for MVP</h4>
+          <ul style="margin:0;padding-left:18px;font-size:14px;">
+            <li>Full AI scheduling autonomy</li>
+            <li>Deep Procore-level project management</li>
+            <li>Full municipal/permit integration</li>
+            <li>Complex supplier procurement/EDI</li>
+            <li>Advanced enterprise permission hierarchies</li>
+            <li>Predictive analytics beyond simple flags</li>
+            <li>A full accounting system</li>
+            <li>Drawing markup tools (viewing only, sourced from Bluebeam/Drawliner)</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>MVP acceptance criteria</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Scenario</th><th>Acceptance criterion</th></tr>
+        <tr><td>GC creates a project</td><td>A project exists with address, client, and scope in under 5 minutes of data entry</td></tr>
+        <tr><td>GC invites trades</td><td>Each trade receives scope, drawings, address, and dates in a single invitation</td></tr>
+        <tr><td>Trade accepts work</td><td>Acceptance is recorded as a binding, timestamped state — not a verbal yes</td></tr>
+        <tr><td>Trade views task on mobile</td><td>Task detail loads in under 2 seconds and works with cached data if offline</td></tr>
+        <tr><td>Trade checks in</td><td>Check-in is a single tap, visible immediately to PM and superintendent</td></tr>
+        <tr><td>Trade marks complete</td><td>Completion requires at least one photo and is timestamped</td></tr>
+        <tr><td>Next trade receives notification</td><td>Notification fires automatically within minutes of the predecessor task closing</td></tr>
+        <tr><td>Homeowner receives status update</td><td>Update sends in plain language after PM approval, on every completed milestone</td></tr>
+        <tr><td>GC sees delayed or completed work</td><td>Dashboard reflects true status within the same realtime update window as mobile</td></tr>
+        <tr><td>Schedule updates after a delay</td><td>Downstream, unconfirmed tasks shift automatically; confirmed tasks require PM review</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s17">
+      <div class="eyebrow">17 · Competitive Differentiation</div>
+      <h2>What everyone else still leaves broken</h2>
+
+      <div class="table-wrap"><table>
+        <tr><th>Competitor / category</th><th>Strengths</th><th>Weaknesses</th><th>Users still struggle with</th><th>Worth copying</th><th>Where this platform wins</th></tr>
+        <tr><td>Procore</td><td>Deep enterprise PM, huge feature surface, strong on commercial</td><td>Heavy, expensive, overkill for small/mid residential GCs</td><td>Trade adoption on the field side; still phone-heavy for day-to-day handoffs</td><td>Document control rigor</td><td>Lightweight, trade-first mobile flow Procore doesn't prioritize</td></tr>
+        <tr><td>Buildertrend</td><td>Strong residential builder fit, client portal</td><td>Scheduling is calendar-based, not dependency-aware</td><td>Same silent-handoff problem this platform targets directly</td><td>Client-facing portal polish</td><td>Native trade-dependency graph and auto-notification</td></tr>
+        <tr><td>CoConstruct</td><td>Good for custom home builders, client communication tools</td><td>Less trade-side mobile depth</td><td>Trade accountability, real-time crew status</td><td>Client selections/budget tracking UX</td><td>Crew tracking and check-in/out built for the field</td></tr>
+        <tr><td>JobTread</td><td>Good estimate-to-project flow for small builders</td><td>Coordination still manual once trades are assigned</td><td>Handoff automation, materials-aware scheduling</td><td>Estimate-to-project conversion simplicity</td><td>Materials- and inspection-aware auto-scheduling</td></tr>
+        <tr><td>Fieldwire</td><td>Strong field task/punch-list tool</td><td>Not schedule- or trade-invitation-native</td><td>Cross-trade sequencing, availability matching</td><td>Field task UX simplicity</td><td>Full coordination graph, not just a task list</td></tr>
+        <tr><td>Monday.com / Asana (generic PM)</td><td>Flexible, familiar, cheap</td><td>No construction-specific dependency logic at all</td><td>Everything domain-specific: inspections, trades, materials</td><td>Nothing structural — flexibility is the opposite of what's needed here</td><td>Purpose-built domain model beats a flexible blank canvas</td></tr>
+        <tr><td>Calendar-based workflows (Google Calendar, etc.)</td><td>Free, universal, zero learning curve</td><td>No dependency awareness, no trade-side accountability</td><td>Literally everything this platform solves</td><td>Zero learning curve is the bar to clear on mobile UX</td><td>Everything — this is the status quo being replaced</td></tr>
+        <tr><td>WhatsApp/text coordination</td><td>Trades already use it, zero friction</td><td>No structure, no memory, no automation, no audit trail</td><td>Everything gets lost, nothing recalculates automatically</td><td>The low-friction feel of just texting</td><td>Same low friction, but with memory, structure, and automation underneath</td></tr>
+      </table></div>
+
+      <div class="callout">
+        <div class="cap">Differentiation focus</div>
+        Automatic downstream notifications · trade availability as a real calendar, not a phone call · construction-specific dependencies (trade → inspection → material → trade) · materials-aware scheduling · inspection-gated scheduling · permit/municipality integration via ADUFlow · mobile-first trade reporting · homeowner communication by default · AI conflict detection with human approval · the Drawliner/ADUFlow ecosystem loop.
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s18">
+      <div class="eyebrow">18 · Pricing &amp; Revenue Model</div>
+      <h2>Price the coordination, not the seats</h2>
+
+      <div class="table-wrap"><table>
+        <tr><th>Plan</th><th>Suggested price</th><th>Included</th><th>Best fit</th><th>Feature limits</th></tr>
+        <tr><td>Small Contractor</td><td>~$79–149/mo</td><td>Up to ~5 active projects, unlimited trade invites, core scheduling + notifications</td><td>Solo GCs, small remodelers</td><td>No AI features, basic dashboard only</td></tr>
+        <tr><td>Mid-Size Builder</td><td>~$299–599/mo</td><td>Up to ~25 active projects, team roles, materials coordination, richer reporting</td><td>Growing residential builders, ADU builders</td><td>AI features limited to daily briefing + drafting assist</td></tr>
+        <tr><td>Large Builder</td><td>~$799–1,999/mo</td><td>Unlimited projects, advanced permissions, priority support, deeper analytics</td><td>Multi-crew builders, regional operations</td><td>Full integration suite included</td></tr>
+        <tr><td>Enterprise / Municipality / Network</td><td>Custom</td><td>Municipality integration, builder network features, API access, custom workflows</td><td>Large builders, municipal partnerships, franchise/network operators</td><td>Negotiated per deployment</td></tr>
+      </table></div>
+
+      <h3>Add-on revenue</h3>
+      <ul>
+        <li>Premium AI scheduling (conflict detection, forecasting, natural-language control)</li>
+        <li>Municipal permitting integration (via ADUFlow) beyond basic status sync</li>
+        <li>Supplier/material system integrations beyond manual entry</li>
+        <li>Analytics and cross-project benchmarking</li>
+        <li>White-label homeowner portal (builder branding instead of platform branding)</li>
+        <li>SMS usage fees beyond an included volume (ties directly to 10DLC/TCPA cost realities)</li>
+        <li>Additional document/photo storage beyond plan defaults</li>
+        <li>Marketplace fee for connecting builders to trades outside their existing network (later phase)</li>
+      </ul>
+      <p><strong>Core vs. gated:</strong> the coordination graph itself (schedule, trade invites, notifications, check-in/out, homeowner updates) must stay in every paid tier — that's the product. AI, deep integrations, analytics, and marketplace features are legitimate places to gate, since they're additive rather than foundational.</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s19">
+      <div class="eyebrow">19 · Go-To-Market Strategy</div>
+      <h2>Start where the pain is sharpest and the crew count is small enough to see results fast</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h4>Ideal initial customers</h4>
+          <p>Small general contractors and residential builders running multiple trades per project on a repeatable workflow — remodelers, ADU builders, and trade-heavy contractors already frustrated with phone/text coordination.</p>
+        </div>
+        <div class="card">
+          <h4>Recommended beachhead</h4>
+          <p>ADU and small residential remodel builders: high trade-coordination density per project, a natural on-ramp to the ADUFlow relationship, and short enough project cycles to prove ROI in weeks, not quarters.</p>
+        </div>
+      </div>
+
+      <h3>Sales messaging</h3>
+      <ul>
+        <li>"Stop calling every trade manually."</li>
+        <li>"Know who is on site tomorrow — before tomorrow."</li>
+        <li>"The next trade finds out automatically. You don't have to remember to tell them."</li>
+        <li>"Fewer delays from missed handoffs, not just a nicer calendar."</li>
+        <li>"Homeowners stay informed without you making another call."</li>
+        <li>"An accepted estimate becomes a real schedule — automatically."</li>
+        <li>"Permits and inspections connected to the actual build timeline, not a separate spreadsheet."</li>
+      </ul>
+
+      <h3>Launch strategy</h3>
+      <ol>
+        <li>Pilot with 3–5 contractors on real, live projects — not a sandbox demo.</li>
+        <li>Track missed handoffs, phone call volume, schedule delays, and trade response time before and after.</li>
+        <li>Collect field feedback weekly during the pilot; prioritize mobile flow fixes above everything else.</li>
+        <li>Expand only after the mobile trade experience is genuinely frictionless — adoption failure here kills everything downstream.</li>
+      </ol>
+
+      <h3>Sales assets</h3>
+      <p>A short live demo script built around a real handoff scenario · a simple ROI calculator (hours saved on phone calls + delay days avoided) · a case-study format built from pilot data · a contractor onboarding checklist · a trade onboarding SMS template · a homeowner portal walkthrough · a one-page comparison against manual/phone-based scheduling.</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s20">
+      <div class="eyebrow">20 · Risks &amp; Mitigation</div>
+      <h2>Where this fails, if it fails</h2>
+
+      <div class="table-wrap"><table>
+        <tr><th>Risk</th><th>Category</th><th>Severity</th><th>Likelihood</th><th>Mitigation</th><th>Early warning sign</th></tr>
+        <tr><td>Trying to build too broad too early</td><td>Product</td><td><span class="sev sev-high">High</span></td><td>High</td><td>Hold the line on MVP scope (Section 16); resist adding AI/enterprise features before core adoption</td><td>Roadmap keeps growing without pilot data to justify it</td></tr>
+        <tr><td>Trades resist adopting another app</td><td>Product</td><td><span class="sev sev-high">High</span></td><td>Medium</td><td>Obsess over the few-taps mobile flow (Section 11); make SMS a true fallback, not an afterthought</td><td>Pilot trades reverting to texting the GC directly</td></tr>
+        <tr><td>GC data-entry burden outweighs perceived value</td><td>Product</td><td><span class="sev sev-med">Medium</span></td><td>Medium</td><td>Auto-populate from accepted estimates wherever possible (Function B)</td><td>Projects created but schedules never fleshed out</td></tr>
+        <tr><td>Automated scheduling makes a wrong change</td><td>Product</td><td><span class="sev sev-high">High</span></td><td>Medium</td><td>Human approval gate on any change touching a confirmed assignment (Section 7)</td><td>Trades reporting schedule changes they never approved</td></tr>
+        <tr><td>Mobile field UX too complicated</td><td>Product</td><td><span class="sev sev-high">High</span></td><td>Medium</td><td>Usability testing with actual crews, not just PMs, before wide release</td><td>Low check-in/completion rates vs. actual site activity</td></tr>
+        <tr><td>Homeowner expectations mismanaged by automation</td><td>Product</td><td><span class="sev sev-med">Medium</span></td><td>Medium</td><td>Human-approved messaging only (Section 12); proactive delay notice, never silent</td><td>Homeowner complaints citing surprise, not the delay itself</td></tr>
+        <tr><td>Complex dependency logic has edge-case bugs</td><td>Technical</td><td><span class="sev sev-high">High</span></td><td>Medium</td><td>Extensive scenario-based QA (Section 21) before trusting auto-recalculation broadly</td><td>Schedule recalculations producing implausible dates</td></tr>
+        <tr><td>Realtime notification reliability</td><td>Technical</td><td><span class="sev sev-med">Medium</span></td><td>Medium</td><td>SMS fallback for every push notification; delivery status tracked and retried</td><td>Rising "I never got notified" reports</td></tr>
+        <tr><td>Offline mobile usage causes sync conflicts</td><td>Technical</td><td><span class="sev sev-med">Medium</span></td><td>Medium</td><td>Field-reported timestamps win conflicts by default; conflicts logged for review</td><td>Duplicate or out-of-order check-ins in the audit log</td></tr>
+        <tr><td>Third-party integration reliability (suppliers, calendars)</td><td>Technical</td><td><span class="sev sev-med">Medium</span></td><td>Medium</td><td>Integration layer with isolated retry/backoff per source (Section 15)</td><td>One integration outage degrading unrelated features</td></tr>
+        <tr><td>AI mistakes erode trust</td><td>Technical</td><td><span class="sev sev-med">Medium</span></td><td>Medium</td><td>Human approval on every high-impact AI action; visible confidence/uncertainty</td><td>Users ignoring or disabling AI suggestions</td></tr>
+        <tr><td>Competing with large, funded construction platforms</td><td>Business</td><td><span class="sev sev-med">Medium</span></td><td>Medium</td><td>Win on coordination depth and mobile trade adoption, not feature-count parity</td><td>Losing deals purely on feature checklists, not usage</td></tr>
+        <tr><td>Contractors unwilling to pay for another tool</td><td>Business</td><td><span class="sev sev-med">Medium</span></td><td>Medium</td><td>Tie pricing/messaging directly to phone-call and delay-day reduction (Section 19)</td><td>Long sales cycles citing "another subscription" objections</td></tr>
+        <tr><td>Municipal integrations take longer than planned</td><td>Business</td><td><span class="sev sev-low">Low-Med</span></td><td>High</td><td>Sequence municipal integration late (Phase 4), never on the MVP critical path</td><td>Roadmap slipping because a municipality integration isn't ready</td></tr>
+        <tr><td>Marketplace supply/demand complexity (later phase)</td><td>Business</td><td><span class="sev sev-low">Low</span></td><td>Low (until attempted)</td><td>Defer marketplace features until the coordination core has real usage data</td><td>Pressure to launch marketplace before core retention is proven</td></tr>
+        <tr><td>Poor trade-side adoption</td><td>Operational</td><td><span class="sev sev-high">High</span></td><td>Medium</td><td>Treat trade mobile experience as the top-priority surface, always</td><td>Trades accepting invites but not using check-in/completion features</td></tr>
+        <tr><td>Bad data compounding into bad automation</td><td>Operational</td><td><span class="sev sev-med">Medium</span></td><td>Medium</td><td>Only feed verified, complete project records back into duration models (Section 4, step 14)</td><td>Duration estimates drifting further from actuals over time</td></tr>
+        <tr><td>Support burden from notification overload/complaints</td><td>Operational</td><td><span class="sev sev-med">Medium</span></td><td>Medium</td><td>Sensible default notification frequency, easy per-role tuning</td><td>Rising opt-out or mute rates</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s21">
+      <div class="eyebrow">21 · Testing &amp; QA Plan</div>
+      <h2>Trust is earned one correct handoff at a time</h2>
+      <p class="lede">Test across every user type in Section 5, and treat the full Job-Created-to-Project-Complete path (Section 4) as the core regression suite — not a demo script.</p>
+
+      <h3>Core end-to-end test sequence</h3>
+      <div class="table-wrap"><table>
+        <tr><th>#</th><th>Test objective</th><th>Expected result</th><th>Failure sign</th><th>Severity</th></tr>
+        <tr><td class="num">1</td><td>Project created</td><td>Project record exists with all required fields</td><td>Missing required field allowed through</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td class="num">2</td><td>Estimate accepted</td><td>Scope/budget attach to the project</td><td>Estimate data doesn't map to project scope</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td class="num">3</td><td>Schedule generated</td><td>Baseline schedule reflects real dependencies</td><td>Illogical sequencing (drywall before rough-in)</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td class="num">4</td><td>Trades invited</td><td>Correct trades receive scope/drawings/address</td><td>Wrong trade type invited, or missing attachment</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td class="num">5</td><td>Trade accepts</td><td>Assignment locks, calendar reflects the booking</td><td>Trade double-booked despite accepting</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td class="num">6</td><td>Materials scheduled</td><td>Delivery date attaches as a task dependency</td><td>Task shows ready despite materials not delivered</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td class="num">7</td><td>Crew checks in</td><td>Status visible to PM/superintendent in realtime</td><td>Check-in delayed or lost</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td class="num">8</td><td>Crew marks complete</td><td>Task closes with photo evidence attached</td><td>Completion accepted with no evidence</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td class="num">9</td><td>Inspection requested</td><td>Required documents validated before submission</td><td>Request submitted with missing required docs</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td class="num">10</td><td>Inspection passed</td><td>Gate opens only on explicit recorded result</td><td>Downstream task unblocked with no recorded result</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td class="num">11</td><td>Next trade notified</td><td>Notification fires within minutes of gate clearing</td><td>Next trade finds out late or not at all</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td class="num">12</td><td>Homeowner updated</td><td>Plain-language update sent post-PM-approval</td><td>Jargon-heavy or unapproved message sent</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td class="num">13</td><td>Delay occurs</td><td>Delay recorded with reason and evidence</td><td>Delay not visible to downstream parties</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td class="num">14</td><td>Schedule recalculates</td><td>Only unconfirmed downstream tasks shift automatically</td><td>Confirmed assignment silently changed</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td class="num">15</td><td>Affected users notified</td><td>Only genuinely affected parties are notified, with specifics</td><td>Notification storm or a missed affected party</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td class="num">16</td><td>Project completed</td><td>All tasks/inspections closed, punch list resolved</td><td>Project marked complete with open items</td><td><span class="sev sev-med">Med</span></td></tr>
+      </table></div>
+
+      <h3>Critical QA checks</h3>
+      <p>Trade notification accuracy · schedule dependency accuracy · crew availability conflict detection · double-booking prevention · check-in/check-out reliability under poor connectivity · mobile usability in field conditions · drawing/document access and versioning · material-delay rescheduling · inspection gate logic (never auto-pass) · homeowner update accuracy and tone · AI conflict warnings (no false confidence) · audit log completeness · permission boundary safety (Section 5).</p>
+
+      <h3>UX testing questions</h3>
+      <ul>
+        <li>Can a GC create a project and reach a usable schedule in one sitting?</li>
+        <li>Can a trade accept a job in a few taps from a push notification alone?</li>
+        <li>Can a crew member mark a task complete, with a photo, in under 30 seconds?</li>
+        <li>Can a homeowner understand their project's status without calling anyone?</li>
+        <li>Can a superintendent see tomorrow's full site plan in one glance?</li>
+        <li>Can any user recover cleanly from a delay without losing trust in the schedule?</li>
+      </ul>
+
+      <h3>Testing scorecard template</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Feature</th><th>Functionality</th><th>UX</th><th>Trust</th><th>Speed</th><th>Main issue</th><th>Priority</th></tr>
+        <tr><td>Trade invite/accept</td><td>—</td><td>—</td><td>—</td><td>—</td><td>Fill in per test cycle</td><td>—</td></tr>
+        <tr><td>Check-in/out</td><td>—</td><td>—</td><td>—</td><td>—</td><td>Fill in per test cycle</td><td>—</td></tr>
+        <tr><td>Schedule recalculation</td><td>—</td><td>—</td><td>—</td><td>—</td><td>Fill in per test cycle</td><td>—</td></tr>
+        <tr><td>Homeowner dashboard</td><td>—</td><td>—</td><td>—</td><td>—</td><td>Fill in per test cycle</td><td>—</td></tr>
+        <tr><td>Inspection gating</td><td>—</td><td>—</td><td>—</td><td>—</td><td>Fill in per test cycle</td><td>—</td></tr>
+      </table></div>
+      <p style="font-size:13px;color:var(--ink-dim);">Score 1–5 per column each pilot cycle; this table is a template to populate with real pilot data, not to leave blank.</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s22">
+      <div class="eyebrow">22 · Product Roadmap</div>
+      <h2>Five phases, each one earning the next</h2>
+
+      <div class="roadmap-phase">
+        <div class="ph-head"><b>Phase 1 — Coordination MVP</b><span>Release criteria: pilot GCs report fewer missed handoffs within 30 days</span></div>
+        <div class="ph-body">
+          <p><strong>Features:</strong> project scheduling, trade invitations, accept/decline, mobile field updates, basic notifications, completion reporting, GC dashboard, homeowner updates.<br>
+          <strong>User value:</strong> replaces phone-tag with a trustworthy shared status.<br>
+          <strong>Technical risk:</strong> low-medium — mostly CRUD plus a notification engine.<br>
+          <strong>Success metric:</strong> reduction in coordination-related phone calls per project.</p>
+        </div>
+      </div>
+
+      <div class="roadmap-phase">
+        <div class="ph-head"><b>Phase 2 — Smart Scheduling</b><span>Release criteria: auto-recalculation trusted enough that PMs stop manually double-checking it</span></div>
+        <div class="ph-body">
+          <p><strong>Features:</strong> dependency graph, auto-rescheduling, critical path, trade availability matching, delay impact, weather-aware scheduling, calendar integration.<br>
+          <strong>User value:</strong> the schedule becomes self-correcting instead of static.<br>
+          <strong>Technical risk:</strong> medium-high — dependency logic edge cases.<br>
+          <strong>Success metric:</strong> % of delays absorbed by auto-recalculation without a manual fire drill.</p>
+        </div>
+      </div>
+
+      <div class="roadmap-phase">
+        <div class="ph-head"><b>Phase 3 — Materials and Inspections</b><span>Release criteria: at least one full ADU/remodel project runs entirely through materials + inspection gating</span></div>
+        <div class="ph-body">
+          <p><strong>Features:</strong> material delivery coordination, inspection milestones, permit status surfacing, failed-inspection workflows, supplier notifications, first municipality pilot.<br>
+          <strong>User value:</strong> the two most disruptive real-world delay sources become visible and schedule-aware.<br>
+          <strong>Technical risk:</strong> medium — depends on supplier/municipal integration quality.<br>
+          <strong>Success metric:</strong> reduction in "surprise" material/inspection delays.</p>
+        </div>
+      </div>
+
+      <div class="roadmap-phase">
+        <div class="ph-head"><b>Phase 4 — Ecosystem Integration</b><span>Release criteria: a real project's duration model measurably improves using Drawliner-derived quantities</span></div>
+        <div class="ph-body">
+          <p><strong>Features:</strong> Drawliner integration, ADUFlow integration, estimate-to-schedule conversion, takeoff-based duration estimation, QuickBooks/Procore/Buildertrend integrations, CRM integration.<br>
+          <strong>User value:</strong> the compounding ecosystem advantage described in Section 14 starts to materialize.<br>
+          <strong>Technical risk:</strong> high — multiple external integration surfaces.<br>
+          <strong>Success metric:</strong> estimate-to-actual duration variance shrinking release over release.</p>
+        </div>
+      </div>
+
+      <div class="roadmap-phase">
+        <div class="ph-head"><b>Phase 5 — AI Coordination Engine</b><span>Release criteria: AI recommendations accepted by PMs at a meaningfully high rate, with full auditability</span></div>
+        <div class="ph-body">
+          <p><strong>Features:</strong> AI conflict detection, forecasting, the AI assistant, natural-language scheduling, risk scoring, a productivity learning loop, automated (human-approved) homeowner updates.<br>
+          <strong>User value:</strong> the system starts anticipating problems instead of only reacting to them.<br>
+          <strong>Technical risk:</strong> high — this is where trust, not just capability, is the hard problem.<br>
+          <strong>Success metric:</strong> AI-flagged risks that would otherwise have gone unnoticed until too late.</p>
+        </div>
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s23">
+      <div class="eyebrow">23 · Final Build Priorities</div>
+      <h2>What to build, and what to leave alone</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h4>Top 10 MVP priorities</h4>
+          <ol style="margin:0;padding-left:20px;font-size:14px;">
+            <li>Project/job creation</li>
+            <li>Basic schedule with dependencies</li>
+            <li>Trade invitation and acceptance</li>
+            <li>Mobile trade task view</li>
+            <li>Check-in / check-out</li>
+            <li>Mark complete with photos</li>
+            <li>Delay reporting</li>
+            <li>Automatic next-trade notification</li>
+            <li>Homeowner status updates</li>
+            <li>GC dashboard for today / tomorrow / late work</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h4>Top 10 differentiators (build after MVP proves adoption)</h4>
+          <ol style="margin:0;padding-left:20px;font-size:14px;">
+            <li>Estimate-to-schedule conversion</li>
+            <li>Takeoff-based duration estimates</li>
+            <li>Trade availability network</li>
+            <li>Automatic downstream notifications (deepened)</li>
+            <li>Material-aware scheduling</li>
+            <li>Inspection-gated scheduling</li>
+            <li>Municipality/permit integration</li>
+            <li>AI conflict detection</li>
+            <li>Natural-language schedule control</li>
+            <li>Shared ecosystem with Drawliner and ADUFlow</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="final-rec">
+        <h3>Final recommendation</h3>
+        <p><strong>Build this as a shared coordination engine inside the broader ecosystem, not a fully standalone product.</strong> Its data model (Section 15) is designed to consume Drawliner's quantities and ADUFlow's permit/inspection status as first-class inputs — value that a standalone competitor structurally cannot replicate without also owning estimating and permitting. That's what makes the ecosystem approach more defensible than shipping "just another scheduling app": the moat isn't a feature, it's the compounding data loop across three connected products.</p>
+        <p><strong>What reinforces what:</strong> Drawliner makes this platform's schedules more accurate from day one of a project; ADUFlow makes its inspection gating real instead of guessed; this platform, in turn, is where both of those products' outputs finally get used to change what actually happens on site — and its completion data flows back to make the next estimate and the next permit timeline better too.</p>
+        <p><strong>Build first:</strong> the coordination MVP (Section 16) standalone, so it delivers value even before any ecosystem connection exists — that's what proves trade-side adoption, which is the hardest and most important risk to retire early (Section 20).<br>
+        <strong>Wait on:</strong> AI autonomy, full municipal integration, and marketplace features — all three are more valuable once there's a real, adopted coordination graph to plug them into, and all three are expensive to get wrong before that.<br>
+        <strong>Avoid:</strong> chasing feature-parity with Procore/Buildertrend on breadth. Win on depth in the one place they're both structurally weak — the actual moment-to-moment coordination between GC, trade, and homeowner.</p>
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+  </main>
+</div>
