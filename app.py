@@ -249,6 +249,37 @@ def register_routes(app):
             return redirect(url_for("homeowner_view", project_id=session.get("project_id")))
         return redirect(url_for("login"))
 
+    @app.route("/account/password", methods=["GET", "POST"])
+    @role_required("gc", "trade", "homeowner")
+    def change_password():
+        if request.method == "POST":
+            current_password = request.form.get("current_password", "")
+            new_password = request.form.get("new_password", "")
+            confirm_password = request.form.get("confirm_password", "")
+
+            user = User.query.get_or_404(session["user_id"])
+
+            errors = []
+            if not check_password_hash(user.password_hash, current_password):
+                errors.append("Current password is incorrect.")
+            if len(new_password) < 8:
+                errors.append("New password must be at least 8 characters.")
+            if new_password != confirm_password:
+                errors.append("New password and confirmation do not match.")
+
+            if errors:
+                for error in errors:
+                    flash(error, "error")
+                return render_template("change_password.html")
+
+            user.password_hash = generate_password_hash(new_password)
+            _log_audit(user.username, "change_password", "User", user.id, "Changed their own password")
+            db.session.commit()
+            flash("Password updated.", "success")
+            return redirect(url_for("dashboard_redirect"))
+
+        return render_template("change_password.html")
+
     # ------------------------------------------------------------------
     # GC / PM
     # ------------------------------------------------------------------

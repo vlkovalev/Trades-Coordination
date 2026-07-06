@@ -28,6 +28,7 @@
   <main>
     <div class="topbar">
       <h1>{{ trade_company.name }}</h1>
+      <a href="{{ url_for('change_password') }}">Change Password</a> &middot;
       <a href="{{ url_for('logout') }}">Logout</a>
     </div>
     <p>{{ trade_company.trade_type }} &middot; {{ trade_company.service_area }}</p>

@@ -52,12 +52,43 @@ class TradeCoordinationRoutesTest(unittest.TestCase):
         response = self.client.get("/", follow_redirects=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("TradesSync Login", response.get_data(as_text=True))
+        self.assertIn("Constrivo Login", response.get_data(as_text=True))
 
     def test_gc_dashboard_requires_login(self):
         response = self.client.get("/projects", follow_redirects=True)
 
         self.assertIn("log in", response.get_data(as_text=True).lower())
+
+    def test_change_password_flow(self):
+        self._login("gc_test")
+
+        wrong_current = self.client.post(
+            "/account/password",
+            data={"current_password": "wrongpass", "new_password": "newpass1234", "confirm_password": "newpass1234"},
+            follow_redirects=True,
+        )
+        self.assertIn("Current password is incorrect", wrong_current.get_data(as_text=True))
+
+        mismatch = self.client.post(
+            "/account/password",
+            data={"current_password": "testpass123", "new_password": "newpass1234", "confirm_password": "different"},
+            follow_redirects=True,
+        )
+        self.assertIn("do not match", mismatch.get_data(as_text=True))
+
+        success = self.client.post(
+            "/account/password",
+            data={"current_password": "testpass123", "new_password": "newpass1234", "confirm_password": "newpass1234"},
+            follow_redirects=True,
+        )
+        self.assertIn("Password updated", success.get_data(as_text=True))
+
+        self.client.get("/logout")
+        old_password_login = self._login("gc_test", password="testpass123")
+        self.assertIn("Invalid username or password", old_password_login.get_data(as_text=True))
+
+        new_password_login = self._login("gc_test", password="newpass1234")
+        self.assertIn("Operations Dashboard", new_password_login.get_data(as_text=True))
 
     def test_project_creation_and_task_workflow(self):
         self._login("gc_test")
