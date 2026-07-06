@@ -41,7 +41,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for log in logs %}
+            {% for log in entries %}
               <tr>
                 <td style="font-family: Consolas, monospace; font-size: 0.8rem; color: var(--text-muted);">
                   {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}

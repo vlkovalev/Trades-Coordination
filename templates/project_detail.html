@@ -63,7 +63,15 @@
           </div>
         </div>
 
-        <div style="margin-top: 24px; border-top: 1px dashed var(--panel-border); padding-top: 20px;">
+        <div style="margin-top: 20px; border-top: 1px dashed var(--panel-border); padding-top: 16px;">
+          <span class="text-muted" style="font-size: 0.8rem; display: block; margin-bottom: 6px;">Site Access &amp; Parking Instructions:</span>
+          <form method="post" action="{{ url_for('update_access_instructions', project_id=project.id) }}">
+            <textarea name="access_instructions" rows="3" placeholder="e.g., Gate code 1234, park in the driveway, dog in the backyard" style="font-size: 0.85rem;">{{ project.access_instructions or '' }}</textarea>
+            <button type="submit" class="btn btn-secondary" style="width: 100%; font-size: 0.8rem; padding: 8px; margin-top: 8px;">Save Access Instructions</button>
+          </form>
+        </div>
+
+        <div style="margin-top: 20px; border-top: 1px dashed var(--panel-border); padding-top: 20px;">
           <a href="{{ url_for('homeowner_view', project_id=project.id) }}" target="_blank" class="btn btn-secondary" style="width: 100%; font-size: 0.85rem; padding: 10px;">Open Homeowner Portal &nearr;</a>
         </div>
       </div>
@@ -86,6 +94,7 @@
                 <th>Task Milestone</th>
                 <th>Trade Type</th>
                 <th>Status</th>
+                <th>Readiness</th>
                 <th>Scheduled Date</th>
                 <th>Subcontractor Assignment</th>
               </tr>
@@ -99,6 +108,12 @@
                   </td>
                   <td><span class="badge badge-invited">{{ task.trade|capitalize }}</span></td>
                   <td><span class="badge badge-{{ task.status }}">{{ task.status }}</span></td>
+                  <td>
+                    {% set r = readiness_by_task[task.id] %}
+                    {% set label, cls = readiness_display[r.status] %}
+                    <span class="badge {{ cls }}" title="{{ (r.blockers + r.warnings)|join(' ') }}">{{ label }}</span>
+                    {% if r.overridden %}<span class="text-muted" style="font-size: 0.7rem;"> (overridden)</span>{% endif %}
+                  </td>
                   <td style="font-family: Consolas, monospace;">{{ task.scheduled_date or 'TBD' }}</td>
                   <td>
                     {% if task.status == 'pending' %}
@@ -132,7 +147,7 @@
                 </tr>
               {% else %}
                 <tr>
-                  <td colspan="6" class="text-center text-muted" style="padding: 24px;">No tasks created for this project yet. Add a task to start scheduling.</td>
+                  <td colspan="7" class="text-center text-muted" style="padding: 24px;">No tasks created for this project yet. Add a task to start scheduling.</td>
                 </tr>
               {% endfor %}
             </tbody>

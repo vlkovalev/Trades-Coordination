@@ -18,6 +18,7 @@ class Project(db.Model):
     client_email = db.Column(db.String(120), nullable=True)
     budget = db.Column(db.Float, nullable=True, default=0.0)
     status = db.Column(db.String(20), nullable=False, default="active")  # active/complete
+    access_instructions = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     tasks = db.relationship(
@@ -56,6 +57,12 @@ class Task(db.Model):
     status = db.Column(db.String(20), nullable=False, default="pending")
     scheduled_date = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Readiness checklist override — a GC can dispatch a trade despite a
+    # blocking readiness issue, but it must be a deliberate, logged decision.
+    readiness_override = db.Column(db.Boolean, nullable=False, default=False)
+    readiness_override_reason = db.Column(db.Text, nullable=True)
+    readiness_override_by = db.Column(db.String(160), nullable=True)
 
     depends_on = db.relationship("Task", remote_side=[id])
     assignments = db.relationship("Assignment", backref="task", cascade="all, delete-orphan")

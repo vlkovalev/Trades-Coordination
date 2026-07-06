@@ -157,9 +157,15 @@ class TradeCoordinationRoutesTest(unittest.TestCase):
             assignment = Assignment.query.filter_by(task_id=task_id).first()
             assignment_id = assignment.id
 
-        # Trade logs in, accepts, checks in, and completes with a required photo.
+        # Trade logs in and sees the invitation actually rendered on their queue
+        # page (not just reflected in the DB) — regression test for a variable-
+        # name mismatch that once made this page always render empty.
         self.client.get("/logout")
         self._login("rivera_test")
+        queue_page = self.client.get("/trade/1")
+        self.assertIn("Framing", queue_page.get_data(as_text=True))
+        self.assertIn(f"/assignments/{assignment_id}/accept", queue_page.get_data(as_text=True))
+        self.assertNotIn("No pending project invites", queue_page.get_data(as_text=True))
         self.client.post(f"/assignments/{assignment_id}/accept")
         self.client.post(f"/tasks/{task_id}/checkin")
 
@@ -207,6 +213,101 @@ class TradeCoordinationRoutesTest(unittest.TestCase):
         self.client.get("/logout")
         directory = self.client.get("/")
         self.assertIn("5.0★ (1 review)", directory.get_data(as_text=True))
+
+        # The audit log actually renders the entries that piled up above —
+        # regression test for the same class of variable-name mismatch bug.
+        self._login("gc_test")
+        audit_page = self.client.get("/audit")
+        self.assertIn("create_project", audit_page.get_data(as_text=True))
+        self.assertIn("invite_trade", audit_page.get_data(as_text=True))
+        self.assertNotIn("No system audits logged yet", audit_page.get_data(as_text=True))
+
+    def test_readiness_blocks_checkin_until_prior_task_complete_or_overridden(self):
+        self._login("gc_test")
+
+        self.client.post(
+            "/projects/new",
+            data={
+                "name": "West Wing",
+                "address": "456 Oak",
+                "client_name": "Jordan Lee",
+                "client_phone": "+15555550111",
+                "access_instructions": "Gate code 4321",
+            },
+            follow_redirects=True,
+        )
+
+        with self.app.app_context():
+            project_id = Project.query.filter_by(name="West Wing").first().id
+            framing_id = TradeCompany.query.filter_by(trade_type="framing").first().id
+            electrical_id = TradeCompany.query.filter_by(trade_type="electrical").first().id
+
+        # Framing task first, electrical depends on it.
+        self.client.post(
+            f"/projects/{project_id}/tasks/new",
+            data={"name": "Framing", "trade_type_needed": "framing", "insert_after": ""},
+        )
+        with self.app.app_context():
+            framing_task_id = Task.query.filter_by(project_id=project_id, name="Framing").first().id
+
+        self.client.post(
+            f"/projects/{project_id}/tasks/new",
+            data={"name": "Rough-in Electrical", "trade_type_needed": "electrical", "insert_after": framing_task_id},
+        )
+        with self.app.app_context():
+            electrical_task = Task.query.filter_by(project_id=project_id, name="Rough-in Electrical").first()
+            electrical_task_id = electrical_task.id
+            self.assertEqual(electrical_task.depends_on_task_id, framing_task_id)
+
+        # Invite and confirm the electrical trade before framing is done.
+        self.client.post(f"/tasks/{electrical_task_id}/invite", data={"trade_company_id": electrical_id})
+        with self.app.app_context():
+            electrical_assignment_id = Assignment.query.filter_by(task_id=electrical_task_id).first().id
+
+        # Create an electrical trade login and accept the assignment.
+        with self.app.app_context():
+            db.session.add(
+                User(
+                    username="sparky_test",
+                    password_hash=generate_password_hash("testpass123"),
+                    role="trade",
+                    trade_company_id=electrical_id,
+                )
+            )
+            db.session.commit()
+
+        self.client.get("/logout")
+        self._login("sparky_test")
+        self.client.post(f"/assignments/{electrical_assignment_id}/accept")
+
+        blocked = self.client.post(f"/tasks/{electrical_task_id}/checkin", follow_redirects=True)
+        self.assertIn("ready yet", blocked.get_data(as_text=True))
+        self.assertIn("Framing", blocked.get_data(as_text=True))
+        with self.app.app_context():
+            # Accepted but not checked in — the readiness gate blocked the transition.
+            self.assertEqual(Task.query.get(electrical_task_id).status, "confirmed")
+
+        task_page = self.client.get(f"/tasks/{electrical_task_id}")
+        self.assertIn("Not Ready", task_page.get_data(as_text=True))
+        self.assertIn("check in is blocked", task_page.get_data(as_text=True))
+
+        # GC overrides the readiness check.
+        self.client.get("/logout")
+        self._login("gc_test")
+        override = self.client.post(
+            f"/tasks/{electrical_task_id}/override-readiness",
+            data={"reason": "Homeowner confirmed framing is actually done, system just hasn't caught up."},
+            follow_redirects=True,
+        )
+        self.assertIn("Readiness override applied", override.get_data(as_text=True))
+
+        # Now the electrical trade can check in.
+        self.client.get("/logout")
+        self._login("sparky_test")
+        allowed = self.client.post(f"/tasks/{electrical_task_id}/checkin", follow_redirects=True)
+        self.assertIn("Checked in", allowed.get_data(as_text=True))
+        with self.app.app_context():
+            self.assertEqual(Task.query.get(electrical_task_id).status, "checked_in")
 
 
 if __name__ == "__main__":

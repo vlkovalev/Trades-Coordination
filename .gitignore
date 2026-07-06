@@ -4,3 +4,4 @@ __pycache__/
 instance/
 uploads/
 .pytest_cache/
+.claude/scheduled_tasks.lock

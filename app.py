@@ -70,6 +70,14 @@ STATUS_LABELS = {
     "declined": "Declined",
 }
 
+# Readiness status → (display label, badge class). Reuses the existing
+# badge color scheme (green/amber/red) rather than inventing a new one.
+READINESS_DISPLAY = {
+    "ready": ("Ready", "badge-complete"),
+    "at_risk": ("At Risk", "badge-pending"),
+    "not_ready": ("Not Ready", "badge-delayed"),
+}
+
 DEFAULT_TRADE_COMPANIES = [
     ("Rivera Framing Co.", "framing", "+15555550101", "Metro area"),
     ("Bright Spark Electric", "electrical", "+15555550102", "Metro area"),
@@ -178,10 +186,52 @@ def _log_audit(actor, action, entity_type, entity_id, detail):
     )
 
 
+def compute_readiness(task):
+    """Whether a trade is actually clear to be dispatched to this task — the
+    check that runs before dispatch, not just whether a date is on the calendar.
+
+    Returns {"status": "ready"|"at_risk"|"not_ready", "blockers": [...],
+    "warnings": [...], "overridden": bool, "override_reason"/"override_by"}.
+    Blockers are hard gates; warnings are shown but don't block check-in.
+    """
+    blockers = []
+    warnings = []
+
+    if task.depends_on_task_id:
+        predecessor = Task.query.get(task.depends_on_task_id)
+        if predecessor and predecessor.status != "complete":
+            blockers.append(f"Previous task ‘{predecessor.name}’ is not complete yet.")
+
+    if not _current_assignment(task):
+        blockers.append("No trade has confirmed this task yet.")
+
+    if not task.project.access_instructions:
+        warnings.append("No site access or parking instructions on file for this project.")
+
+    if task.readiness_override:
+        return {
+            "status": "ready",
+            "blockers": [],
+            "warnings": warnings,
+            "overridden": True,
+            "override_reason": task.readiness_override_reason,
+            "override_by": task.readiness_override_by,
+        }
+
+    if blockers:
+        status = "not_ready"
+    elif warnings:
+        status = "at_risk"
+    else:
+        status = "ready"
+
+    return {"status": status, "blockers": blockers, "warnings": warnings, "overridden": False}
+
+
 def register_routes(app):
     @app.context_processor
     def inject_globals():
-        return {"status_labels": STATUS_LABELS}
+        return {"status_labels": STATUS_LABELS, "readiness_display": READINESS_DISPLAY}
 
     # ------------------------------------------------------------------
     # Authentication & User Management
@@ -340,7 +390,8 @@ def register_routes(app):
             client_email = request.form.get("client_email", "").strip() or None
             address = request.form.get("address", "").strip()
             consent = request.form.get("consent")
-            
+            access_instructions = request.form.get("access_instructions", "").strip() or None
+
             budget_str = request.form.get("budget", "0").strip()
             try:
                 budget = float(budget_str)
@@ -372,6 +423,7 @@ def register_routes(app):
                 client_phone=client_phone or None,
                 client_email=client_email,
                 budget=budget,
+                access_instructions=access_instructions,
             )
             db.session.add(project)
             db.session.flush()
@@ -401,13 +453,27 @@ def register_routes(app):
         project = Project.query.get_or_404(project_id)
         tasks = Task.query.filter_by(project_id=project_id).order_by(Task.sequence_order).all()
         trade_companies = TradeCompany.query.order_by(TradeCompany.name).all()
+        readiness_by_task = {t.id: compute_readiness(t) for t in tasks}
         return render_template(
             "project_detail.html",
             project=project,
             tasks=tasks,
             trade_companies=trade_companies,
             trade_types=TRADE_TYPES,
+            readiness_by_task=readiness_by_task,
         )
+
+    @app.route("/projects/<int:project_id>/access-instructions", methods=["POST"])
+    @role_required("gc")
+    def update_access_instructions(project_id):
+        project = Project.query.get_or_404(project_id)
+        project.access_instructions = request.form.get("access_instructions", "").strip() or None
+        _log_audit(
+            "GC/PM", "update_access_instructions", "Project", project.id, "Updated site access instructions"
+        )
+        db.session.commit()
+        flash("Access instructions updated.", "success")
+        return redirect(url_for("project_detail", project_id=project_id))
 
     @app.route("/tasks/<int:task_id>/invite", methods=["POST"])
     @role_required("gc")
@@ -550,6 +616,9 @@ def register_routes(app):
             task=task,
             assignment=assignment,
             can_act=is_assigned_trade,
+            is_gc=is_gc,
+            role=role,
+            readiness=compute_readiness(task),
         )
 
     @app.route("/tasks/<int:task_id>/checkin", methods=["POST"])
@@ -561,6 +630,15 @@ def register_routes(app):
             flash("You don't have access to that task.", "error")
             return redirect(url_for("login"))
 
+        readiness = compute_readiness(task)
+        if readiness["status"] == "not_ready":
+            flash(
+                "This job isn't ready yet: " + " ".join(readiness["blockers"])
+                + " Ask your GC to resolve this or override the readiness check.",
+                "error",
+            )
+            return redirect(url_for("task_detail", task_id=task.id))
+
         task.status = "checked_in"
         _log_audit(
             assignment.trade_company.name, "check_in", "Task", task.id, f"Checked in to task '{task.name}'"
@@ -568,6 +646,31 @@ def register_routes(app):
         db.session.commit()
         flash("Checked in.", "success")
         return redirect(url_for("task_detail", task_id=task.id))
+
+    @app.route("/tasks/<int:task_id>/override-readiness", methods=["POST"])
+    @role_required("gc")
+    def override_readiness(task_id):
+        task = Task.query.get_or_404(task_id)
+        reason = request.form.get("reason", "").strip()
+        if not reason:
+            flash("Please explain why you're overriding the readiness check.", "error")
+            return redirect(url_for("task_detail", task_id=task_id))
+
+        gc_user = User.query.get(session.get("user_id"))
+        task.readiness_override = True
+        task.readiness_override_reason = reason
+        task.readiness_override_by = gc_user.username if gc_user else "GC/PM"
+
+        _log_audit(
+            task.readiness_override_by,
+            "override_readiness",
+            "Task",
+            task.id,
+            f"Overrode readiness check for '{task.name}': {reason}",
+        )
+        db.session.commit()
+        flash("Readiness override applied — the trade can now check in.", "success")
+        return redirect(url_for("task_detail", task_id=task_id))
 
     @app.route("/tasks/<int:task_id>/complete", methods=["POST"])
     @role_required("trade")

@@ -90,6 +90,47 @@
       </div>
     </div>
 
+    <!-- Readiness check — is this task actually clear to dispatch? -->
+    <div class="card">
+      {% set label, cls = readiness_display[readiness.status] %}
+      <div class="flex align-center gap-12" style="margin-bottom: 10px;">
+        <span class="badge {{ cls }}" style="font-size: 0.85rem;">{{ label }}</span>
+        <h3 style="margin: 0;">Site Readiness</h3>
+      </div>
+
+      {% if readiness.overridden %}
+        <p class="text-muted" style="font-size: 0.85rem;">
+          Readiness override applied by <strong>{{ readiness.override_by }}</strong>: “{{ readiness.override_reason }}”
+        </p>
+      {% endif %}
+
+      {% if readiness.blockers %}
+        <ul style="margin: 8px 0 0; padding-left: 18px; color: var(--status-delayed); font-size: 0.9rem;">{% for b in readiness.blockers %}<li>{{ b }}</li>{% endfor %}</ul>
+      {% endif %}
+      {% if readiness.warnings %}
+        <ul style="margin: 8px 0 0; padding-left: 18px; color: var(--status-pending); font-size: 0.9rem;">{% for w in readiness.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+      {% endif %}
+      {% if not readiness.blockers and not readiness.warnings %}
+        <p class="text-muted" style="font-size: 0.85rem;">Nothing blocking this task — clear to dispatch.</p>
+      {% endif %}
+
+      {% if is_gc and readiness.status == 'not_ready' and not readiness.overridden %}
+        <div style="margin-top: 16px; border-top: 1px dashed var(--panel-border); padding-top: 16px;">
+          <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 8px;">
+            You can override this and let the trade check in anyway — this will be logged.
+          </p>
+          <form method="post" action="{{ url_for('override_readiness', task_id=task.id) }}">
+            <textarea name="reason" rows="2" placeholder="Why are you overriding this readiness check?" required></textarea>
+            <button type="submit" class="btn btn-secondary" style="margin-top: 8px;">Override &amp; Allow Dispatch</button>
+          </form>
+        </div>
+      {% elif role == 'trade' and readiness.status == 'not_ready' %}
+        <p class="text-muted" style="font-size: 0.8rem; margin-top: 12px;">
+          This job isn't ready yet — check in is blocked until your GC resolves this or overrides it.
+        </p>
+      {% endif %}
+    </div>
+
     <!-- Subcontractor Actions Section -->
     {% if role == 'trade' %}
       <div class="card">
@@ -171,7 +212,7 @@
           {% set _ = history.append(a.trade_company.name ~ " was invited (Status: " ~ a.status ~ ") on " ~ a.invited_at.strftime('%Y-%m-%d %H:%M')) %}
         {% endfor %}
         {% for d in task.delay_events %}
-          {% set _ = history.append("⚠️ Delay logged: '" ~ d.reason ~ "' — rescheduled from " ~ d.original_date ~ " to " ~ d.new_date) %}
+          {% set _ = history.append("⚠️ Delay logged on " ~ d.reported_at.strftime('%Y-%m-%d %H:%M') ~ ": '" ~ d.reason ~ "'") %}
         {% endfor %}
         
         {% for item in history %}

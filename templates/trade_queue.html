@@ -72,7 +72,7 @@
               </tr>
             </thead>
             <tbody>
-              {% for a in invites %}
+              {% for a in pending_invitations %}
                 <tr>
                   <td><strong>{{ a.task.project.name }}</strong><br><span class="text-muted" style="font-size: 0.8rem;">{{ a.task.project.address }}</span></td>
                   <td>{{ a.task.name }}</td>
@@ -110,7 +110,7 @@
               </tr>
             </thead>
             <tbody>
-              {% for a in active_jobs %}
+              {% for a in active_assignments %}
                 <tr>
                   <td><strong>{{ a.task.project.name }}</strong><br><span class="text-muted" style="font-size: 0.8rem;">{{ a.task.project.address }}</span></td>
                   <td>{{ a.task.name }}</td>
