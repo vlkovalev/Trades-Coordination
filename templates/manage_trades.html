@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manage Trades — Constrivo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="logo">Constri<span>vo</span></div>
+      <div class="flex align-center gap-12">
+        <span class="user-badge">GC Portal</span>
+        <a href="{{ url_for('change_password') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Change Password</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <a href="{{ url_for('gc_dashboard') }}" style="display: inline-block; margin-bottom: 20px;">&larr; Back to dashboard</a>
+
+    <div class="flex justify-between align-center mb-24">
+      <div>
+        <h1 style="margin-bottom: 4px;">Manage Trade Companies</h1>
+        <p class="text-muted">These are the subcontractors visible in your invite lists and the public trade directory.</p>
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(category_filter=["success", "error"]) %}
+      {% if messages %}
+        {% for message in messages %}
+          {% if 'added' in message or 'updated' in message or 'removed' in message %}
+            <div class="alert-box alert-success">{{ message }}</div>
+          {% else %}
+            <div class="alert-box alert-error">{{ message }}</div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="card">
+      <h3 style="margin-bottom: 12px;">Add a Trade Company</h3>
+      <form method="post" action="{{ url_for('add_trade_company') }}" class="grid grid-2" style="gap: 12px 16px; align-items: end;">
+        <div>
+          <label for="new_name" style="margin-top: 0;">Name</label>
+          <input type="text" id="new_name" name="name" placeholder="e.g., Rivera Framing Co." required>
+        </div>
+        <div>
+          <label for="new_trade_type" style="margin-top: 0;">Trade Type</label>
+          <select id="new_trade_type" name="trade_type" required>
+            <option value="">Select...</option>
+            {% for t in trade_types %}
+              <option value="{{ t }}">{{ t|capitalize }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="new_phone" style="margin-top: 0;">Phone</label>
+          <input type="text" id="new_phone" name="phone" placeholder="e.g., +15555550100" required>
+        </div>
+        <div>
+          <label for="new_service_area" style="margin-top: 0;">Service Area (optional)</label>
+          <input type="text" id="new_service_area" name="service_area" placeholder="e.g., Metro area">
+        </div>
+        <div style="grid-column: span 2;">
+          <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">Add Trade Company</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom: 12px;">Existing Trade Companies</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Trade Type</th>
+              <th>Phone</th>
+              <th>Service Area</th>
+              <th>Rating</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tc in trade_companies %}
+              <tr>
+                <td><input type="text" name="name" form="edit-{{ tc.id }}" value="{{ tc.name }}" aria-label="Name for {{ tc.name }}" required style="min-width: 160px;"></td>
+                <td>
+                  <select name="trade_type" form="edit-{{ tc.id }}" aria-label="Trade type for {{ tc.name }}" required>
+                    {% for t in trade_types %}
+                      <option value="{{ t }}" {% if t == tc.trade_type %}selected{% endif %}>{{ t|capitalize }}</option>
+                    {% endfor %}
+                  </select>
+                </td>
+                <td><input type="text" name="phone" form="edit-{{ tc.id }}" value="{{ tc.phone }}" aria-label="Phone for {{ tc.name }}" required style="min-width: 130px;"></td>
+                <td><input type="text" name="service_area" form="edit-{{ tc.id }}" value="{{ tc.service_area or '' }}" aria-label="Service area for {{ tc.name }}" style="min-width: 130px;"></td>
+                <td class="text-muted" style="font-size: 0.85rem;">{{ tc.rating_display }}</td>
+                <td>
+                  <div class="flex gap-12">
+                    <button type="submit" form="edit-{{ tc.id }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Save</button>
+                    <button type="submit" form="delete-{{ tc.id }}" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="6" class="text-center text-muted" style="padding: 24px;">No trade companies yet — add one above.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% for tc in trade_companies %}
+        <form id="edit-{{ tc.id }}" method="post" action="{{ url_for('edit_trade_company', trade_company_id=tc.id) }}"></form>
+        <form id="delete-{{ tc.id }}" method="post" action="{{ url_for('delete_trade_company', trade_company_id=tc.id) }}"
+              onsubmit="return confirm('Remove {{ tc.name }}? This only works if they have no assignments, reviews, or a login.');"></form>
+      {% endfor %}
+    </div>
+  </main>
+</body>
+</html>

@@ -101,15 +101,19 @@ def create_app():
 
     with app.app_context():
         db.create_all()
-        if TradeCompany.query.first() is None:
+
+        # Everything below is a one-time seed for a brand-new install, gated
+        # on whether any User has ever existed — not on whether TradeCompany
+        # currently has rows, so that a GC deleting the placeholder trade
+        # companies (via Manage Trades) doesn't get them silently re-created
+        # on the next deploy/restart.
+        if User.query.first() is None:
             for name, trade_type, phone, service_area in DEFAULT_TRADE_COMPANIES:
                 db.session.add(
                     TradeCompany(name=name, trade_type=trade_type, phone=phone, service_area=service_area)
                 )
             db.session.commit()
 
-        # Seed default users if they don't exist
-        if User.query.first() is None:
             # Seed GC
             db.session.add(User(
                 username="gc_admin",
@@ -507,6 +511,84 @@ def register_routes(app):
     def audit_log():
         entries = AuditLog.query.order_by(AuditLog.timestamp.desc()).all()
         return render_template("audit.html", entries=entries)
+
+    @app.route("/trades")
+    @role_required("gc")
+    def manage_trades():
+        trade_companies = TradeCompany.query.order_by(TradeCompany.name).all()
+        return render_template("manage_trades.html", trade_companies=trade_companies, trade_types=TRADE_TYPES)
+
+    @app.route("/trades/new", methods=["POST"])
+    @role_required("gc")
+    def add_trade_company():
+        name = request.form.get("name", "").strip()
+        trade_type = request.form.get("trade_type", "")
+        phone = request.form.get("phone", "").strip()
+        service_area = request.form.get("service_area", "").strip() or None
+
+        if not name or trade_type not in TRADE_TYPES or not phone:
+            flash("Name, trade type, and phone are required.", "error")
+            return redirect(url_for("manage_trades"))
+
+        trade_company = TradeCompany(name=name, trade_type=trade_type, phone=phone, service_area=service_area)
+        db.session.add(trade_company)
+        db.session.flush()
+        _log_audit(
+            "GC/PM", "add_trade_company", "TradeCompany", trade_company.id, f"Added trade company '{name}'"
+        )
+        db.session.commit()
+        flash("Trade company added.", "success")
+        return redirect(url_for("manage_trades"))
+
+    @app.route("/trades/<int:trade_company_id>/edit", methods=["POST"])
+    @role_required("gc")
+    def edit_trade_company(trade_company_id):
+        trade_company = TradeCompany.query.get_or_404(trade_company_id)
+        name = request.form.get("name", "").strip()
+        trade_type = request.form.get("trade_type", "")
+        phone = request.form.get("phone", "").strip()
+        service_area = request.form.get("service_area", "").strip() or None
+
+        if not name or trade_type not in TRADE_TYPES or not phone:
+            flash("Name, trade type, and phone are required.", "error")
+            return redirect(url_for("manage_trades"))
+
+        trade_company.name = name
+        trade_company.trade_type = trade_type
+        trade_company.phone = phone
+        trade_company.service_area = service_area
+        _log_audit(
+            "GC/PM", "edit_trade_company", "TradeCompany", trade_company.id, f"Updated trade company '{name}'"
+        )
+        db.session.commit()
+        flash("Trade company updated.", "success")
+        return redirect(url_for("manage_trades"))
+
+    @app.route("/trades/<int:trade_company_id>/delete", methods=["POST"])
+    @role_required("gc")
+    def delete_trade_company(trade_company_id):
+        trade_company = TradeCompany.query.get_or_404(trade_company_id)
+        has_history = (
+            Assignment.query.filter_by(trade_company_id=trade_company_id).first() is not None
+            or Review.query.filter_by(trade_company_id=trade_company_id).first() is not None
+            or User.query.filter_by(trade_company_id=trade_company_id).first() is not None
+        )
+        if has_history:
+            flash(
+                f"Can't delete {trade_company.name} — it has assignments, reviews, or a login tied to it. "
+                "Edit it instead of deleting it.",
+                "error",
+            )
+            return redirect(url_for("manage_trades"))
+
+        name = trade_company.name
+        db.session.delete(trade_company)
+        _log_audit(
+            "GC/PM", "delete_trade_company", "TradeCompany", trade_company_id, f"Deleted trade company '{name}'"
+        )
+        db.session.commit()
+        flash(f"{name} removed.", "success")
+        return redirect(url_for("manage_trades"))
 
     # ------------------------------------------------------------------
     # Trade

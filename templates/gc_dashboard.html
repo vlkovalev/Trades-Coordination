@@ -12,6 +12,7 @@
       <div class="logo">Constri<span>vo</span></div>
       <div class="flex align-center gap-12">
         <span class="user-badge">GC Portal ({{ session.get('role')|upper }})</span>
+        <a href="{{ url_for('manage_trades') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Manage Trades</a>
         <a href="{{ url_for('change_password') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Change Password</a>
         <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Logout</a>
       </div>

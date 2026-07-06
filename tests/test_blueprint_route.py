@@ -309,6 +309,57 @@ class TradeCoordinationRoutesTest(unittest.TestCase):
         with self.app.app_context():
             self.assertEqual(Task.query.get(electrical_task_id).status, "checked_in")
 
+    def test_manage_trade_companies(self):
+        self._login("gc_test")
+
+        added = self.client.post(
+            "/trades/new",
+            data={"name": "Solid Roofing Co.", "trade_type": "general", "phone": "+15555550199", "service_area": "North side"},
+            follow_redirects=True,
+        )
+        self.assertIn("Trade company added", added.get_data(as_text=True))
+        self.assertIn("Solid Roofing Co.", added.get_data(as_text=True))
+
+        with self.app.app_context():
+            new_trade = TradeCompany.query.filter_by(name="Solid Roofing Co.").first()
+            new_trade_id = new_trade.id
+            framing_id = TradeCompany.query.filter_by(trade_type="framing").first().id
+
+        edited = self.client.post(
+            f"/trades/{new_trade_id}/edit",
+            data={"name": "Solid Roofing LLC", "trade_type": "general", "phone": "+15555550199", "service_area": "North side"},
+            follow_redirects=True,
+        )
+        self.assertIn("Trade company updated", edited.get_data(as_text=True))
+        self.assertIn("Solid Roofing LLC", edited.get_data(as_text=True))
+
+        # A trade with no assignments/reviews/logins can be deleted...
+        deleted = self.client.post(f"/trades/{new_trade_id}/delete", follow_redirects=True)
+        self.assertIn("removed", deleted.get_data(as_text=True))
+        with self.app.app_context():
+            self.assertIsNone(TradeCompany.query.get(new_trade_id))
+
+        # ...but one with a login tied to it (rivera_test, seeded in setUp) cannot be.
+        blocked = self.client.post(f"/trades/{framing_id}/delete", follow_redirects=True)
+        self.assertIn("Can&#39;t delete".replace("&#39;", "'"), blocked.get_data(as_text=True).replace("&#39;", "'"))
+        with self.app.app_context():
+            self.assertIsNotNone(TradeCompany.query.get(framing_id))
+
+    def test_seeding_does_not_recreate_deleted_trade_companies_on_restart(self):
+        with self.app.app_context():
+            for tc in TradeCompany.query.all():
+                if tc.trade_type != "framing":
+                    db.session.delete(tc)
+            db.session.commit()
+            remaining = TradeCompany.query.count()
+
+        # Simulate the app restarting (create_app runs its one-time seed logic
+        # again) — since a User already exists, it must NOT re-seed the trade
+        # companies that were deliberately deleted.
+        create_app()
+        with self.app.app_context():
+            self.assertEqual(TradeCompany.query.count(), remaining)
+
 
 if __name__ == "__main__":
     unittest.main()
