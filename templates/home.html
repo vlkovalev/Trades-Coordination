@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Constrivo — Coordination for construction trades, not just a calendar</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="logo">Constri<span>vo</span></div>
+      <a href="{{ url_for('login') }}" class="btn btn-primary" style="padding: 8px 18px; font-size: 0.9rem;">Log in</a>
+    </div>
+  </header>
+
+  <main style="max-width: 960px;">
+    <div class="card hero" style="padding: 40px 36px;">
+      <h1 style="font-size: 2.1rem; line-height: 1.25;">Nobody should find out a job is delayed by showing up to an empty site.</h1>
+      <p>
+        Constrivo connects your schedule, trades, and clients into one system — so when
+        something changes, the next trade and the homeowner already know, instead of
+        finding out from a missed phone call.
+      </p>
+      <a href="{{ url_for('login') }}" class="btn btn-primary" style="display: inline-block; margin-top: 8px; padding: 10px 20px;">Log in to your account</a>
+    </div>
+
+    <h2 style="margin-top: 40px; margin-bottom: 4px;">What Constrivo does</h2>
+    <p class="text-muted" style="margin-bottom: 20px;">One shared project record, three views into it.</p>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <span class="badge badge-invited" style="margin-bottom: 12px;">General Contractor</span>
+        <h3 style="margin-bottom: 8px;">Run every project from one dashboard</h3>
+        <p class="text-muted" style="font-size: 0.9rem;">
+          Create a project, sequence the trades it needs, and invite the right company to
+          each task. See today's jobs, late tasks, and who still needs to be invited — without
+          another round of phone calls.
+        </p>
+      </div>
+      <div class="card">
+        <span class="badge badge-confirmed" style="margin-bottom: 12px;">Trade / Subcontractor</span>
+        <h3 style="margin-bottom: 8px;">Know exactly what to do today</h3>
+        <p class="text-muted" style="font-size: 0.9rem;">
+          Accept or decline an invitation, check in on arrival, and mark a task complete with
+          a photo — the next trade in line gets notified automatically the moment you're done.
+        </p>
+      </div>
+      <div class="card">
+        <span class="badge badge-complete" style="margin-bottom: 12px;">Homeowner</span>
+        <h3 style="margin-bottom: 8px;">Always know what's happening</h3>
+        <p class="text-muted" style="font-size: 0.9rem;">
+          A plain-language timeline of your project — what's done, what's next, and a clear
+          heads-up the moment something is delayed, without having to call to ask.
+        </p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 32px; text-align: center;">
+      <p class="text-muted" style="margin-bottom: 12px;">Already have an account?</p>
+      <a href="{{ url_for('login') }}" class="btn btn-primary" style="padding: 10px 24px;">Log in</a>
+    </div>
+  </main>
+</body>
+</html>

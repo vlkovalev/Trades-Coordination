@@ -189,7 +189,7 @@ def register_routes(app):
     def index():
         if "user_id" in session:
             return redirect(url_for("dashboard_redirect"))
-        return redirect(url_for("login"))
+        return render_template("home.html")
 
     @app.route("/login", methods=["GET", "POST"])
     def login():

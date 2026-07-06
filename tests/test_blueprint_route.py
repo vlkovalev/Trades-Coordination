@@ -48,11 +48,19 @@ class TradeCoordinationRoutesTest(unittest.TestCase):
         self.assertIn("Construction Trade Coordination Platform", response.get_data(as_text=True))
         self.assertIn("MVP Scope", response.get_data(as_text=True))
 
-    def test_root_redirects_to_login_when_logged_out(self):
+    def test_root_shows_landing_page_when_logged_out(self):
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Nobody should find out a job is delayed", response.get_data(as_text=True))
+        self.assertIn('href="/login"', response.get_data(as_text=True))
+
+    def test_root_redirects_logged_in_user_to_their_dashboard(self):
+        self._login("gc_test")
         response = self.client.get("/", follow_redirects=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Constrivo Login", response.get_data(as_text=True))
+        self.assertIn("Operations Dashboard", response.get_data(as_text=True))
 
     def test_gc_dashboard_requires_login(self):
         response = self.client.get("/projects", follow_redirects=True)
