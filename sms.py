@@ -11,10 +11,17 @@ Platform (a homeowner's consent is now tied to their Project, not a
 Customer/Appointment).
 """
 
+import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from models import ConsentRecord, Notification, db
+
+try:
+    from twilio.rest import Client
+    TWILIO_AVAILABLE = True
+except ImportError:
+    TWILIO_AVAILABLE = False
 
 # ASSUMPTION (flagged in reports/flask-dev.md): the Phase 1 data model has no
 # per-project timezone field, so quiet-hours checks use this fixed default for
@@ -26,8 +33,26 @@ QUIET_HOURS_END = 21  # 9 PM local
 
 
 def _send_sms(to, body):
-    """Stand-in for an actual SMS provider call. Just logs what would be sent."""
-    print(f"[SMS SEND] to={to} body={body!r}")
+    """Sends SMS using Twilio if configured, or falls back to print logging."""
+    account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+    auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+    from_number = os.environ.get("TWILIO_PHONE_NUMBER")
+
+    if TWILIO_AVAILABLE and account_sid and auth_token and from_number:
+        try:
+            client = Client(account_sid, auth_token)
+            client.messages.create(
+                to=to,
+                from_=from_number,
+                body=body
+            )
+            print(f"[TWILIO SMS SENT] to={to} body={body!r}")
+            return
+        except Exception as e:
+            print(f"[TWILIO SMS ERROR] to={to} error={e!r}")
+
+    # Fallback log print
+    print(f"[SMS PRINT FALLBACK] to={to} body={body!r}")
 
 
 def _within_quiet_hours(timezone_name):

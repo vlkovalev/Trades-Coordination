@@ -10,35 +10,52 @@
   <header>
     <div class="nav-container">
       <div class="logo">Trades<span>Sync</span></div>
-      <div class="user-badge">GC Portal</div>
+      <div class="flex align-center gap-12">
+        <span class="user-badge">GC Portal</span>
+        <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Logout</a>
+      </div>
     </div>
   </header>
-  
+
   <main>
     <a href="{{ url_for('project_detail', project_id=project.id) }}" style="display: inline-block; margin-bottom: 20px;">&larr; Back to {{ project.name }}</a>
-    
-    <div class="card" style="max-width: 600px; margin: 0 auto;">
-      <h1>Add New Task</h1>
-      <p style="margin-bottom: 24px;">Define a scope of work and designate a trade category for {{ project.name }}.</p>
-      
+
+    <div class="card" style="max-width: 560px;">
+      <h1 style="margin-bottom: 4px;">Add Task</h1>
+      <p class="text-muted" style="margin-bottom: 20px;">{{ project.name }}</p>
+
+      {% with messages = get_flashed_messages(category_filter=["error"]) %}
+        {% if messages %}
+          <div class="alert-box alert-error" style="margin-bottom: 16px;">
+            {% for message in messages %}<div>{{ message }}</div>{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
       <form method="post">
-        <label for="title">Task Title</label>
-        <input type="text" id="title" name="title" placeholder="e.g., Rough-in plumbing" required autocomplete="off">
-        
-        <label for="trade">Designated Trade</label>
-        <select id="trade" name="trade" required>
-          {% for trade_type in trade_types %}
-            <option value="{{ trade_type }}">{{ trade_type|capitalize }}</option>
+        <label for="name">Task name</label>
+        <input id="name" name="name" placeholder="e.g. Rough-in electrical" required>
+
+        <label for="trade_type_needed">Trade needed</label>
+        <select id="trade_type_needed" name="trade_type_needed" required>
+          <option value="">Select a trade...</option>
+          {% for trade in trade_types %}
+            <option value="{{ trade }}">{{ trade|capitalize }}</option>
           {% endfor %}
         </select>
-        
-        <label for="status">Initial Status</label>
-        <select id="status" name="status">
-          <option value="pending">Pending (Unassigned)</option>
-          <option value="confirmed">Confirmed (Assigned)</option>
+
+        <label for="insert_after">Sequence position</label>
+        <select id="insert_after" name="insert_after">
+          <option value="">First task in project</option>
+          {% for t in existing_tasks %}
+            <option value="{{ t.id }}">After #{{ t.sequence_order }} — {{ t.name }}</option>
+          {% endfor %}
         </select>
-        
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 24px;">Create Task</button>
+        <p class="text-muted" style="font-size: 0.8rem; margin-top: 4px;">
+          Tasks run in this order — the next trade is only notified once the task before it is complete.
+        </p>
+
+        <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Add task</button>
       </form>
     </div>
   </main>

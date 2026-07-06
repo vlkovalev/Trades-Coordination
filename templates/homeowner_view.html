@@ -3,137 +3,57 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Client Portal — {{ project.name }}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <title>{{ project.name }} — Project Status</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f8fafc; color: #0f172a; }
+    main { max-width: 680px; margin: 0 auto; padding: 20px 16px 56px; }
+    .card { background: white; border-radius: 14px; padding: 16px; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); margin-bottom: 14px; }
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: bold; }
+    .pill.pending { background: #e2e8f0; color: #475569; }
+    .pill.invited { background: #fef9c3; color: #92730b; }
+    .pill.confirmed { background: #dbeafe; color: #1d4ed8; }
+    .pill.checked_in { background: #e0f2fe; color: #0369a1; }
+    .pill.complete { background: #dcfce7; color: #166534; }
+    .pill.delayed { background: #fee2e2; color: #b91c1c; }
+    .timeline-item { border-bottom: 1px solid #e2e8f0; padding: 10px 0; }
+    .timeline-item:last-child { border-bottom: none; }
+    .delay-banner { background: #fee2e2; color: #b91c1c; padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; }
+  </style>
 </head>
 <body>
-  <header>
-    <div class="nav-container">
-      <div class="logo">Trades<span>Sync</span></div>
-      <div class="flex align-center gap-12">
-        <span class="user-badge">Client Portal</span>
-        <a href="{{ url_for('switch_role') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Switch Role</a>
-      </div>
-    </div>
-  </header>
-  
   <main>
-    <div class="mb-24">
-      <span class="text-muted" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; font-weight: 600;">Welcome home, {{ project.client_name }}</span>
-      <h1 style="margin-top: 4px; margin-bottom: 4px;">{{ project.name }} Status</h1>
-      <p class="text-muted">Homeowner portal for real-time progress, site updates, and photos.</p>
+    <div class="topbar">
+      <h1>{{ project.name }}</h1>
+      <a href="{{ url_for('logout') }}">Logout</a>
     </div>
+    <p>{{ project.address }}</p>
 
-    <!-- Progress Card -->
-    <div class="card">
-      {% set total = tasks|length %}
-      {% set completed = tasks|selectattr('status', 'equalto', 'complete')|list|length %}
-      {% set pct = (completed / total * 100)|int if total > 0 else 0 %}
-      
-      <div class="flex justify-between align-center mb-24">
-        <h2>Overall Completion Progress</h2>
-        <span style="font-weight: 700; font-size: 1.25rem; color: var(--status-complete);">{{ pct }}%</span>
-      </div>
-      
-      <div style="background: rgba(255,255,255,0.05); border-radius: 9999px; height: 16px; overflow: hidden; width: 100%; border: 1px solid var(--panel-border); margin-bottom: 12px;">
-        <div style="background: linear-gradient(to right, #10b981, #059669); height: 100%; width: {{ pct }}%; transition: width 0.5s ease-out; border-radius: 9999px;"></div>
-      </div>
-      <p style="font-size: 0.9rem;" class="text-muted">Completed: {{ completed }} of {{ total }} scheduled milestones.</p>
-    </div>
-
-    <!-- Delay Alerts -->
     {% if active_delays %}
-      <div class="alert-box alert-error">
-        <h3 style="color: var(--status-delayed); margin-bottom: 4px; font-size: 1.1rem;">⚠️ Delay Advisory</h3>
-        {% for delay in active_delays %}
-          <p style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-primary);">
-            <strong>{{ delay.task.name }}</strong>: {{ delay.reason }}
-          </p>
-        {% endfor %}
-        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0; margin-top: 8px;">
-          Our project manager will adjust downstream dependencies and notify you of the updated completion schedule shortly.
-        </p>
-      </div>
+      {% for d in active_delays %}
+        <div class="delay-banner">Heads up — {{ d.task.name }} is running behind schedule. We'll share a new timeline soon.</div>
+      {% endfor %}
     {% endif %}
 
-    <div class="grid grid-2">
-      <!-- Next Up Milestone -->
-      <div>
-        <div class="card" style="height: 100%;">
-          <h2>Next Step Details</h2>
-          <p class="text-muted" style="margin-bottom: 24px;">The next scheduling block and milestone coming up on site.</p>
-          
-          {% if next_up %}
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--panel-border); border-radius: 12px; padding: 20px;">
-              <span class="badge badge-{{ next_up.status }}" style="margin-bottom: 12px;">{{ plain_status[next_up.status] }}</span>
-              <h3 style="font-size: 1.3rem; margin-bottom: 8px;">{{ next_up.name }}</h3>
-              <p class="text-secondary" style="font-size: 0.95rem; margin-bottom: 16px;">
-                Designated Trade: <strong>{{ next_up.trade_type_needed|capitalize }}</strong><br>
-                Target Date: <strong>{{ next_up.scheduled_date or 'Scheduling in progress' }}</strong>
-              </p>
-              
-              <div style="background: rgba(15,23,42,0.4); border-radius: 8px; padding: 12px; font-size: 0.85rem; border: 1px solid var(--panel-border);">
-                <span class="text-muted" style="display: block; text-transform: uppercase; font-size: 0.7rem; font-weight: 600; margin-bottom: 4px;">Subcontractor Status</span>
-                {% if next_up.status == 'checked_in' %}
-                  <span class="text-primary" style="font-weight: 600; color: var(--status-checkedin);">⚡ Crew is active on site right now.</span>
-                {% elif next_up.status == 'confirmed' %}
-                  <span class="text-primary" style="font-weight: 600; color: var(--status-confirmed);">📅 Crew confirmed for target date.</span>
-                {% elif next_up.status == 'delayed' %}
-                  <span class="text-danger" style="font-weight: 600;">🛑 Running behind schedule.</span>
-                {% else %}
-                  <span class="text-muted">Awaiting scheduling handshake.</span>
-                {% endif %}
-              </div>
-            </div>
-          {% else %}
-            <div class="text-center text-muted" style="padding: 40px 24px;">
-              <h3 style="color: var(--status-complete);">🎉 Project Completed!</h3>
-              <p style="margin-top: 8px;">All scheduled milestones have been successfully completed.</p>
-            </div>
-          {% endif %}
-        </div>
-      </div>
+    <div class="card">
+      <h2>What's next</h2>
+      {% if next_up %}
+        <p>{{ next_up.name }} — {{ plain_status.get(next_up.status, next_up.status) }}</p>
+      {% else %}
+        <p>All scheduled work is complete.</p>
+      {% endif %}
+    </div>
 
-      <!-- Interactive Timeline -->
-      <div>
-        <div class="card" style="height: 100%;">
-          <h2>Project Timeline</h2>
-          <p class="text-muted" style="margin-bottom: 24px;">Sequential schedule of construction steps</p>
-          
-          <div class="timeline">
-            {% for task in tasks %}
-              {% set is_active = (task.id == next_up.id) if next_up else False %}
-              <div class="timeline-item {% if task.status == 'complete' %}complete{% elif task.status == 'delayed' %}delayed{% elif is_active %}active{% endif %}">
-                <div class="timeline-dot">
-                  {% if task.status == 'complete' %}✓{% elif task.status == 'delayed' %}!{% else %}{{ loop.index }}{% endif %}
-                </div>
-                <div class="timeline-content">
-                  <div class="flex justify-between align-center mb-24" style="flex-wrap: wrap; gap: 8px;">
-                    <h4 style="margin-bottom: 0; font-size: 1.05rem;">{{ task.name }}</h4>
-                    <span class="badge badge-{{ task.status }}" style="font-size: 0.7rem;">{{ plain_status[task.status] }}</span>
-                  </div>
-                  <p style="font-size: 0.85rem; margin-bottom: 8px;" class="text-secondary">
-                    Trade: {{ task.trade_type_needed|capitalize }} &bull; Date: {{ task.scheduled_date or 'TBD' }}
-                  </p>
-                  
-                  {% if task.photos %}
-                    <div class="image-grid" style="margin-top: 10px;">
-                      {% for photo in task.photos %}
-                        <div>
-                          <img src="{{ url_for('uploaded_file', filename=photo.filename) }}" class="image-thumb" alt="Site upload" style="max-height: 80px; border-radius: 6px;">
-                          {% if photo.caption %}
-                            <p style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">{{ photo.caption }}</p>
-                          {% endif %}
-                        </div>
-                      {% endfor %}
-                    </div>
-                  {% endif %}
-                </div>
-              </div>
-            {% endfor %}
-          </div>
+    <div class="card">
+      <h2>Project timeline</h2>
+      {% for task in tasks %}
+        <div class="timeline-item">
+          <strong>{{ task.name }}</strong>
+          <span class="pill {{ task.status }}">{{ plain_status.get(task.status, task.status) }}</span>
         </div>
-      </div>
+      {% else %}
+        <p>No work scheduled yet.</p>
+      {% endfor %}
     </div>
   </main>
 </body>

@@ -3,151 +3,72 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Role Selection — TradesSync</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <title>Trade Coordination Platform</title>
   <style>
-    .role-btn-group {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 12px;
-      margin-bottom: 20px;
-    }
-    
-    .role-option {
-      position: relative;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--panel-border);
-      border-radius: 12px;
-      padding: 16px 12px;
-      text-align: center;
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .role-option:hover {
-      background: rgba(255, 255, 255, 0.07);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-    
-    .role-option input[type="radio"] {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      accent-color: var(--accent-color);
-      width: 16px;
-      height: 16px;
-    }
-    
-    .role-option.active {
-      border-color: var(--accent-color);
-      background: rgba(249, 115, 22, 0.05);
-      box-shadow: 0 0 12px var(--accent-glow);
-    }
-    
-    .role-icon {
-      font-size: 1.5rem;
-    }
-    
-    .role-title {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: var(--text-primary);
-    }
+    body { font-family: Arial, sans-serif; margin: 0; background: #f8fafc; color: #0f172a; }
+    main { max-width: 640px; margin: 0 auto; padding: 24px 20px 56px; }
+    .card { background: white; border-radius: 14px; padding: 20px; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); margin-bottom: 16px; }
+    label { display: block; margin-top: 12px; font-weight: bold; }
+    select, input { width: 100%; padding: 10px; margin-top: 6px; box-sizing: border-box; }
+    .role-options { display: flex; gap: 10px; margin-top: 8px; }
+    .role-options label { flex: 1; font-weight: normal; background: #eff6ff; border-radius: 10px; padding: 10px; text-align: center; }
+    button { margin-top: 16px; background: #2563eb; color: white; border: none; padding: 12px 18px; border-radius: 999px; cursor: pointer; width: 100%; font-size: 1rem; }
+    .errors { background: #fef2f2; color: #b91c1c; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; }
+    .role-section { display: none; }
+    .role-section.active { display: block; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="nav-container">
-      <div class="logo">Trades<span>Sync</span></div>
-      <div class="user-badge">Prototype Access</div>
-    </div>
-  </header>
-  
-  <main style="max-width: 600px; padding-top: 80px;">
-    <div class="card" style="padding: 32px;">
-      <h1 class="text-center" style="margin-bottom: 8px; font-size: 2rem;">Welcome to TradesSync</h1>
-      <p class="text-center text-muted" style="margin-bottom: 32px;">Choose your active persona to enter the coordination loop.</p>
-      
-      {% with messages = get_flashed_messages(category_filter=["error"]) %}
-        {% if messages %}
-          <div class="alert-box alert-error">
-            {% for message in messages %}<div>{{ message }}</div>{% endfor %}
-          </div>
-        {% endif %}
-      {% endwith %}
-      
+  <main>
+    <h1>Trade Coordination Platform</h1>
+    <p>Prototype access — pick who you are to continue. (No password: this stands in for real login for the MVP.)</p>
+
+    {% with messages = get_flashed_messages(category_filter=["error"]) %}
+      {% if messages %}
+        <div class="errors">
+          {% for message in messages %}<div>{{ message }}</div>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="card">
       <form method="post" id="role-form">
-        <label style="margin-top: 0; font-size: 0.95rem;">Select Your Role</label>
-        <div class="role-btn-group">
-          <div class="role-option" onclick="selectRole(this, 'gc')">
-            <input type="radio" name="role" value="gc" id="role-gc">
-            <span class="role-icon">🏗️</span>
-            <span class="role-title">GC / Builder</span>
-          </div>
-          
-          <div class="role-option" onclick="selectRole(this, 'trade')">
-            <input type="radio" name="role" value="trade" id="role-trade">
-            <span class="role-icon">🔧</span>
-            <span class="role-title">Trade Crew</span>
-          </div>
-          
-          <div class="role-option" onclick="selectRole(this, 'homeowner')">
-            <input type="radio" name="role" value="homeowner" id="role-homeowner">
-            <span class="role-icon">🏡</span>
-            <span class="role-title">Homeowner</span>
-          </div>
+        <label>I am a...</label>
+        <div class="role-options">
+          <label><input type="radio" name="role" value="gc" onchange="showSection('gc')"> GC / PM</label>
+          <label><input type="radio" name="role" value="trade" onchange="showSection('trade')"> Trade Company</label>
+          <label><input type="radio" name="role" value="homeowner" onchange="showSection('homeowner')"> Homeowner</label>
         </div>
-        
-        <!-- Subcontractor Sub-selection -->
-        <div id="section-trade" class="role-section" style="display: none; margin-top: 20px; border-top: 1px solid var(--panel-border); padding-top: 16px;">
-          <label for="trade_company_id">Identify Your Company</label>
-          <select id="trade_company_id" name="trade_company_id" style="margin-top: 6px;">
-            <option value="">Choose Subcontractor...</option>
+
+        <div id="section-trade" class="role-section">
+          <label for="trade_company_id">Your trade company</label>
+          <select id="trade_company_id" name="trade_company_id">
+            <option value="">Select...</option>
             {% for tc in trade_companies %}
-              <option value="{{ tc.id }}">{{ tc.name }} ({{ tc.trade_type|capitalize }})</option>
+              <option value="{{ tc.id }}">{{ tc.name }} ({{ tc.trade_type }})</option>
             {% endfor %}
           </select>
         </div>
-        
-        <!-- Homeowner Sub-selection -->
-        <div id="section-homeowner" class="role-section" style="display: none; margin-top: 20px; border-top: 1px solid var(--panel-border); padding-top: 16px;">
-          <label for="project_id">Select Your Project</label>
-          <select id="project_id" name="project_id" style="margin-top: 6px;">
-            <option value="">Choose Project...</option>
+
+        <div id="section-homeowner" class="role-section">
+          <label for="project_id">Your project</label>
+          <select id="project_id" name="project_id">
+            <option value="">Select...</option>
             {% for p in projects %}
-              <option value="{{ p.id }}">{{ p.name }} &bull; {{ p.client_name }}</option>
+              <option value="{{ p.id }}">{{ p.name }} — {{ p.client_name }}</option>
             {% endfor %}
           </select>
         </div>
-        
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 28px; padding: 14px;">Enter Workspace &rarr;</button>
+
+        <button type="submit">Continue</button>
       </form>
     </div>
   </main>
-  
   <script>
-    function selectRole(element, role) {
-      // Deactivate all role cards
-      document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
-      
-      // Activate the clicked card and check the corresponding radio button
-      element.classList.add('active');
-      const radio = element.querySelector('input[type="radio"]');
-      radio.checked = true;
-      
-      // Hide all sub-selection panels
-      document.querySelectorAll('.role-section').forEach(el => el.style.display = 'none');
-      
-      // Show appropriate sub-selection panel if needed
-      const subPanel = document.getElementById('section-' + role);
-      if (subPanel) {
-        subPanel.style.display = 'block';
-      }
+    function showSection(role) {
+      document.querySelectorAll('.role-section').forEach(function (el) { el.classList.remove('active'); });
+      var el = document.getElementById('section-' + role);
+      if (el) { el.classList.add('active'); }
     }
   </script>
 </body>

@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: trades-coordination
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    disk:
+      name: trades-coordination-uploads
+      mountPath: /var/data/uploads
+      sizeGB: 1
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: trades-coordination-db
+          property: connectionString
+      - key: UPLOAD_FOLDER
+        value: /var/data/uploads
+      - key: SEED_PASSWORD
+        sync: false
+
+databases:
+  - name: trades-coordination-db
+    plan: free

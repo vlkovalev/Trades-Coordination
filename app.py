@@ -5,7 +5,6 @@ from functools import wraps
 from flask import (
     Flask,
     Response,
-    current_app,
     flash,
     redirect,
     render_template,
@@ -15,6 +14,7 @@ from flask import (
     url_for,
 )
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from models import (
     Assignment,
@@ -27,13 +27,15 @@ from models import (
     Task,
     TRADE_TYPES,
     TradeCompany,
+    User,
     db,
 )
 from sms import notify_gc, notify_homeowner, notify_trade
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", os.path.join(BASE_DIR, "uploads"))
 ALLOWED_PHOTO_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+SEED_PASSWORD = os.environ.get("SEED_PASSWORD", "password123")
 
 CONSENT_TEXT = (
     "By checking this box, I confirm the homeowner has agreed to receive text "
@@ -78,8 +80,13 @@ DEFAULT_TRADE_COMPANIES = [
 
 def create_app():
     app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///trades_scheduling.db"
-    app.config["SECRET_KEY"] = "dev-only-secret-key"
+    db_url = os.environ.get("DATABASE_URL", "sqlite:///trades_scheduling.db")
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif db_url.startswith("postgresql://"):
+        db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-only-secret-key")
 
     db.init_app(app)
 
@@ -92,6 +99,44 @@ def create_app():
                 )
             db.session.commit()
 
+        # Seed default users if they don't exist
+        if User.query.first() is None:
+            # Seed GC
+            db.session.add(User(
+                username="gc_admin",
+                password_hash=generate_password_hash(SEED_PASSWORD),
+                role="gc"
+            ))
+            # Seed Rivera Framing (Subcontractor)
+            rivera = TradeCompany.query.filter_by(name="Rivera Framing Co.").first()
+            if rivera:
+                db.session.add(User(
+                    username="rivera_framing",
+                    password_hash=generate_password_hash(SEED_PASSWORD),
+                    role="trade",
+                    trade_company_id=rivera.id
+                ))
+            # Seed Jamie (Homeowner)
+            project = Project.query.filter_by(client_name="Jamie").first()
+            if not project:
+                project = Project(
+                    name="West Remodel",
+                    client_name="Jamie",
+                    address="456 Oak",
+                    client_phone="+15555550100",
+                    budget=120000.0
+                )
+                db.session.add(project)
+                db.session.flush()
+            
+            db.session.add(User(
+                username="homeowner_jamie",
+                password_hash=generate_password_hash(SEED_PASSWORD),
+                role="homeowner",
+                project_id=project.id
+            ))
+            db.session.commit()
+
     register_routes(app)
     return app
 
@@ -100,11 +145,12 @@ def role_required(*roles):
     def decorator(view):
         @wraps(view)
         def wrapped(*args, **kwargs):
-            if current_app.testing:
-                return view(*args, **kwargs)
+            if "user_id" not in session:
+                flash("Please log in to continue.", "error")
+                return redirect(url_for("login"))
             if session.get("role") not in roles:
-                flash("Please choose your role to continue.", "error")
-                return redirect(url_for("role_picker"))
+                flash("You do not have permission to view that page.", "error")
+                return redirect(url_for("login"))
             return view(*args, **kwargs)
 
         return wrapped
@@ -137,49 +183,71 @@ def register_routes(app):
         return {"status_labels": STATUS_LABELS}
 
     # ------------------------------------------------------------------
-    # Role picker (no auth — MVP identity stand-in)
+    # Authentication & User Management
     # ------------------------------------------------------------------
-    @app.route("/", methods=["GET", "POST"])
-    def role_picker():
+    @app.route("/")
+    def index():
+        if "user_id" in session:
+            return redirect(url_for("dashboard_redirect"))
+        return redirect(url_for("login"))
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if "user_id" in session:
+            return redirect(url_for("dashboard_redirect"))
+
         if request.method == "POST":
-            role = request.form.get("role")
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "").strip()
 
-            if role == "gc":
+            user = User.query.filter_by(username=username).first()
+            if user and check_password_hash(user.password_hash, password):
                 session.clear()
-                session["role"] = "gc"
-                return redirect(url_for("gc_dashboard"))
+                session["user_id"] = user.id
+                session["role"] = user.role
+                if user.role == "trade":
+                    session["trade_company_id"] = user.trade_company_id
+                elif user.role == "homeowner":
+                    session["project_id"] = user.project_id
 
-            if role == "trade":
-                trade_company_id = request.form.get("trade_company_id")
-                if not trade_company_id:
-                    flash("Select your trade company.", "error")
-                    return redirect(url_for("role_picker"))
-                session.clear()
-                session["role"] = "trade"
-                session["trade_company_id"] = int(trade_company_id)
-                return redirect(url_for("trade_queue", trade_company_id=int(trade_company_id)))
+                flash("Logged in successfully.", "success")
+                return redirect(url_for("dashboard_redirect"))
 
-            if role == "homeowner":
-                project_id = request.form.get("project_id")
-                if not project_id:
-                    flash("Select your project.", "error")
-                    return redirect(url_for("role_picker"))
-                session.clear()
-                session["role"] = "homeowner"
-                session["project_id"] = int(project_id)
-                return redirect(url_for("homeowner_view", project_id=int(project_id)))
+            flash("Invalid username or password.", "error")
+            return redirect(url_for("login"))
 
-            flash("Please choose a role.", "error")
-            return redirect(url_for("role_picker"))
+        return render_template("login.html")
 
-        trade_companies = TradeCompany.query.order_by(TradeCompany.name).all()
-        projects = Project.query.order_by(Project.name).all()
-        return render_template("role_picker.html", trade_companies=trade_companies, projects=projects)
+    @app.route("/register", methods=["GET", "POST"])
+    def register():
+        # Public self-registration is disabled: this is a single-business
+        # internal tool, and letting any visitor pick "role=gc" or pick any
+        # existing trade company / homeowner project from a dropdown would let
+        # them self-assign access to someone else's data. Trade and homeowner
+        # accounts should be provisioned by the GC (a future admin flow); until
+        # that exists, use the seeded accounts or create users directly in the
+        # database.
+        flash("Account creation is managed by your GC administrator — contact them for access.", "error")
+        return redirect(url_for("login"))
 
-    @app.route("/switch-role")
-    def switch_role():
+    @app.route("/logout")
+    def logout():
         session.clear()
-        return redirect(url_for("role_picker"))
+        flash("Logged out successfully.", "success")
+        return redirect(url_for("login"))
+
+    @app.route("/dashboard-redirect")
+    def dashboard_redirect():
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        role = session.get("role")
+        if role == "gc":
+            return redirect(url_for("gc_dashboard"))
+        elif role == "trade":
+            return redirect(url_for("trade_queue", trade_company_id=session.get("trade_company_id")))
+        elif role == "homeowner":
+            return redirect(url_for("homeowner_view", project_id=session.get("project_id")))
+        return redirect(url_for("login"))
 
     # ------------------------------------------------------------------
     # GC / PM
@@ -228,6 +296,12 @@ def register_routes(app):
             client_email = request.form.get("client_email", "").strip() or None
             address = request.form.get("address", "").strip()
             consent = request.form.get("consent")
+            
+            budget_str = request.form.get("budget", "0").strip()
+            try:
+                budget = float(budget_str)
+            except ValueError:
+                budget = 0.0
 
             errors = []
             if not name:
@@ -251,8 +325,9 @@ def register_routes(app):
                 name=name,
                 address=address,
                 client_name=client_name,
-                client_phone=client_phone,
+                client_phone=client_phone or None,
                 client_email=client_email,
+                budget=budget,
             )
             db.session.add(project)
             db.session.flush()
@@ -289,50 +364,6 @@ def register_routes(app):
             trade_companies=trade_companies,
             trade_types=TRADE_TYPES,
         )
-
-    @app.route("/projects/<int:project_id>/tasks", methods=["POST"])
-    @role_required("gc")
-    def add_task(project_id):
-        project = Project.query.get_or_404(project_id)
-        name = request.form.get("name", "").strip()
-        trade_type_needed = request.form.get("trade_type_needed", "")
-        insert_after_id = request.form.get("insert_after") or None
-
-        if not name or trade_type_needed not in TRADE_TYPES:
-            flash("Please provide a task name and a valid trade type.", "error")
-            return redirect(url_for("project_detail", project_id=project_id))
-
-        existing = Task.query.filter_by(project_id=project_id).order_by(Task.sequence_order).all()
-
-        if insert_after_id:
-            after_task = Task.query.get_or_404(int(insert_after_id))
-            new_order = after_task.sequence_order + 1
-            depends_on = after_task.id
-        else:
-            new_order = 1
-            depends_on = None
-
-        for t in existing:
-            if t.sequence_order >= new_order:
-                t.sequence_order += 1
-
-        task = Task(
-            project_id=project_id,
-            trade_type_needed=trade_type_needed,
-            name=name,
-            sequence_order=new_order,
-            depends_on_task_id=depends_on,
-            status="pending",
-        )
-        db.session.add(task)
-        db.session.flush()
-
-        _log_audit(
-            "GC/PM", "add_task", "Task", task.id, f"Added task '{name}' ({trade_type_needed}) to project {project.name}"
-        )
-        db.session.commit()
-        flash("Task added.", "success")
-        return redirect(url_for("project_detail", project_id=project_id))
 
     @app.route("/tasks/<int:task_id>/invite", methods=["POST"])
     @role_required("gc")
@@ -659,40 +690,56 @@ def register_routes(app):
     @role_required("gc")
     def new_task(project_id):
         project = Project.query.get_or_404(project_id)
+        existing_tasks = Task.query.filter_by(project_id=project_id).order_by(Task.sequence_order).all()
+
         if request.method == "POST":
-            title = request.form.get("title", "").strip() or request.form.get("name", "").strip()
-            trade = request.form.get("trade", "").strip() or request.form.get("trade_type_needed", "").strip()
-            status = request.form.get("status", "pending")
+            name = request.form.get("name", "").strip()
+            trade_type_needed = request.form.get("trade_type_needed", "")
+            insert_after_id = request.form.get("insert_after") or None
 
-            trade_mapped = trade.lower()
-            if "plumb" in trade_mapped:
-                trade_mapped = "plumbing"
-            elif "elec" in trade_mapped:
-                trade_mapped = "electrical"
-            elif "fram" in trade_mapped:
-                trade_mapped = "framing"
-            elif "hvac" in trade_mapped:
-                trade_mapped = "HVAC"
-            elif "gen" in trade_mapped:
-                trade_mapped = "general"
+            if not name or trade_type_needed not in TRADE_TYPES:
+                flash("Please provide a task name and a valid trade type.", "error")
+                return render_template(
+                    "new_task.html", project=project, trade_types=TRADE_TYPES, existing_tasks=existing_tasks
+                )
 
-            existing = Task.query.filter_by(project_id=project_id).all()
-            sequence_order = len(existing) + 1
+            if insert_after_id:
+                after_task = Task.query.get_or_404(int(insert_after_id))
+                new_order = after_task.sequence_order + 1
+                depends_on = after_task.id
+            else:
+                new_order = 1
+                depends_on = None
+
+            for t in existing_tasks:
+                if t.sequence_order >= new_order:
+                    t.sequence_order += 1
 
             task = Task(
                 project_id=project_id,
-                name=title,
-                trade_type_needed=trade_mapped,
-                status=status,
-                sequence_order=sequence_order
+                trade_type_needed=trade_type_needed,
+                name=name,
+                sequence_order=new_order,
+                depends_on_task_id=depends_on,
+                status="pending",
             )
             db.session.add(task)
-            db.session.commit()
+            db.session.flush()
 
-            flash("Task created.", "success")
+            _log_audit(
+                "GC/PM",
+                "add_task",
+                "Task",
+                task.id,
+                f"Added task '{name}' ({trade_type_needed}) to project {project.name}",
+            )
+            db.session.commit()
+            flash("Task added.", "success")
             return redirect(url_for("project_detail", project_id=project_id))
 
-        return render_template("new_task.html", project=project, trade_types=TRADE_TYPES)
+        return render_template(
+            "new_task.html", project=project, trade_types=TRADE_TYPES, existing_tasks=existing_tasks
+        )
 
 
 app = create_app()

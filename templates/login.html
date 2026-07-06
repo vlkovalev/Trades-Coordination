@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login — TradesSync</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="logo">Trades<span>Sync</span></div>
+      <div class="user-badge">Production Portal</div>
+    </div>
+  </header>
+  
+  <main style="max-width: 500px; padding-top: 60px;">
+    <div class="card" style="padding: 32px;">
+      <h1 class="text-center" style="margin-bottom: 8px; font-size: 2rem;">TradesSync Login</h1>
+      <p class="text-center text-muted" style="margin-bottom: 24px;">Sign in to access your coordination dashboard.</p>
+      
+      {% with messages = get_flashed_messages(category_filter=["success", "error"]) %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert-box {% if 'success' in message or 'Logged out' in message %}alert-success{% else %}alert-error{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      
+      <form method="post" id="login-form">
+        <label for="username" style="margin-top: 0;">Username</label>
+        <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username">
+        
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+        
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 24px; padding: 12px;">Sign In &rarr;</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

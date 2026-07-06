@@ -3,159 +3,108 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Task Details — {{ task.name }}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <title>{{ task.name }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f8fafc; color: #0f172a; }
+    main { max-width: 640px; margin: 0 auto; padding: 20px 16px 56px; }
+    .card { background: white; border-radius: 14px; padding: 16px; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); margin-bottom: 14px; }
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: bold; }
+    .pill.pending { background: #e2e8f0; color: #475569; }
+    .pill.invited { background: #fef9c3; color: #92730b; }
+    .pill.confirmed { background: #dbeafe; color: #1d4ed8; }
+    .pill.checked_in { background: #e0f2fe; color: #0369a1; }
+    .pill.complete { background: #dcfce7; color: #166534; }
+    .pill.delayed { background: #fee2e2; color: #b91c1c; }
+    button { background: #2563eb; color: white; border: none; padding: 12px 16px; border-radius: 999px; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 8px; }
+    button.secondary { background: #475569; }
+    button.danger { background: #b91c1c; }
+    input[type=text], textarea, input[type=file] { width: 100%; padding: 8px; margin-top: 6px; box-sizing: border-box; }
+    label { font-weight: bold; margin-top: 10px; display: block; }
+    img.photo { max-width: 100%; border-radius: 8px; margin-top: 8px; }
+    a { display: inline-block; margin-bottom: 12px; }
+  </style>
 </head>
 <body>
-  <header>
-    <div class="nav-container">
-      <div class="logo">Trades<span>Sync</span></div>
-      <div class="flex align-center gap-12">
-        {% if session.get('role') == 'gc' %}
-          <span class="user-badge">GC Portal</span>
-          <a href="{{ url_for('project_detail', project_id=task.project_id) }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Back to Project</a>
-        {% elif session.get('role') == 'trade' %}
-          <span class="user-badge">{{ assignment.trade_company.name if assignment else 'Subcontractor' }}</span>
-          <a href="{{ url_for('trade_queue', trade_company_id=session.get('trade_company_id')) }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Back to Queue</a>
-        {% endif %}
-      </div>
-    </div>
-  </header>
-  
   <main>
+    <a href="javascript:history.back()">&larr; Back</a>
+    <div class="card">
+      <h1>{{ task.name }}</h1>
+      <p>{{ task.project.name }} &middot; {{ task.trade_type_needed }}<br>
+      Status: <span class="pill {{ task.status }}">{{ task.status }}</span></p>
+      {% if assignment %}<p>Assigned to: {{ assignment.trade_company.name }}</p>{% endif %}
+    </div>
+
     {% with messages = get_flashed_messages(category_filter=["success", "error"]) %}
       {% if messages %}
-        {% for message in messages %}
-          {% if 'complete' in message or 'success' in message or 'check' in message %}
-            <div class="alert-box alert-success">{{ message }}</div>
-          {% else %}
-            <div class="alert-box alert-error">{{ message }}</div>
-          {% endif %}
-        {% endfor %}
+        <div class="card">{% for m in messages %}<div>{{ m }}</div>{% endfor %}</div>
       {% endif %}
     {% endwith %}
 
-    <div class="grid grid-2">
-      <!-- Task Information -->
-      <div>
+    {% if can_act %}
+      {% if task.status == "confirmed" %}
         <div class="card">
-          <div class="flex justify-between align-center mb-24">
-            <span class="text-muted" style="font-family: Consolas, monospace; font-size: 0.85rem;">Task #{{ task.id }}</span>
-            <span class="badge badge-{{ task.status }}">{{ task.status }}</span>
-          </div>
-          <h1 style="font-size: 1.8rem; margin-bottom: 12px;">{{ task.name }}</h1>
-          <p style="font-size: 1.05rem;" class="text-muted">Project: <strong>{{ task.project.name }}</strong></p>
-          <p class="text-muted" style="margin-bottom: 24px;">Address: <strong>{{ task.project.address }}</strong></p>
-          
-          <div style="border-top: 1px solid var(--panel-border); padding-top: 16px; margin-top: 16px;">
-            <div class="flex justify-between mb-24">
-              <span class="text-muted">Scheduled Date:</span>
-              <span style="font-weight: 600; color: var(--text-primary);">{{ task.scheduled_date or 'Not scheduled yet' }}</span>
-            </div>
-            <div class="flex justify-between mb-24">
-              <span class="text-muted">Trade Required:</span>
-              <span class="badge badge-invited">{{ task.trade_type_needed|capitalize }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-muted">Superintendent Phone:</span>
-              <span style="font-weight: 500;">+1 555-0199</span>
-            </div>
-          </div>
+          <form method="post" action="{{ url_for('checkin_task', task_id=task.id) }}">
+            <button type="submit">Check in</button>
+          </form>
+        </div>
+      {% endif %}
+
+      {% if task.status in ("confirmed", "checked_in") %}
+        <div class="card">
+          <h2>Mark complete</h2>
+          <form method="post" action="{{ url_for('complete_task', task_id=task.id) }}" enctype="multipart/form-data">
+            <label for="photo">Completion photo{% if not task.photos %} (required){% endif %}</label>
+            <input type="file" id="photo" name="photo" accept="image/*">
+            <label for="caption">Caption (optional)</label>
+            <input type="text" id="caption" name="caption">
+            <button type="submit">Mark complete</button>
+          </form>
         </div>
 
-        <!-- Task Completion Photos -->
         <div class="card">
-          <h2>Completion Photos</h2>
-          <p class="text-muted">Photo verification submitted by field crews</p>
-          
-          {% if task.photos %}
-            <div class="image-grid">
-              {% for photo in task.photos %}
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--panel-border); padding: 8px; border-radius: 12px;">
-                  <img src="{{ url_for('uploaded_file', filename=photo.filename) }}" class="image-thumb" alt="Completion photo">
-                  {% if photo.caption %}
-                    <p style="font-size: 0.8rem; margin-top: 6px; text-align: center; color: var(--text-secondary);">{{ photo.caption }}</p>
-                  {% endif %}
-                  <p style="font-size: 0.7rem; color: var(--text-muted); text-align: center; margin: 2px 0 0;">{{ photo.uploaded_at.strftime('%m/%d %H:%M') }}</p>
-                </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="text-muted text-center" style="padding: 24px; border: 1px dashed var(--panel-border); border-radius: 12px; margin-top: 12px;">No photo proof uploaded yet.</p>
-          {% endif %}
+          <h2>Report a delay</h2>
+          <form method="post" action="{{ url_for('report_delay', task_id=task.id) }}">
+            <label for="reason">Reason</label>
+            <textarea id="reason" name="reason" rows="3" required></textarea>
+            <button type="submit" class="danger">Report delay</button>
+          </form>
         </div>
+      {% endif %}
+
+      {% if task.status == "delayed" %}
+        <div class="card">
+          <h2>Mark complete</h2>
+          <form method="post" action="{{ url_for('complete_task', task_id=task.id) }}" enctype="multipart/form-data">
+            <label for="photo2">Completion photo{% if not task.photos %} (required){% endif %}</label>
+            <input type="file" id="photo2" name="photo" accept="image/*">
+            <label for="caption2">Caption (optional)</label>
+            <input type="text" id="caption2" name="caption">
+            <button type="submit">Mark complete</button>
+          </form>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    {% if task.photos %}
+      <div class="card">
+        <h2>Completion photos</h2>
+        {% for photo in task.photos %}
+          <div>
+            <img class="photo" src="{{ url_for('uploaded_file', filename=photo.filename) }}" alt="Completion photo">
+            {% if photo.caption %}<p>{{ photo.caption }}</p>{% endif %}
+          </div>
+        {% endfor %}
       </div>
+    {% endif %}
 
-      <!-- Actions and History Log -->
-      <div>
-        <!-- Subcontractor Actions Form -->
-        {% if can_act %}
-          <div class="card" style="border-color: var(--accent-color);">
-            <h2 style="color: var(--accent-color); margin-bottom: 16px;">Field Actions</h2>
-            
-            {% if task.status == 'confirmed' or task.status == 'delayed' %}
-              <!-- Check-In Form -->
-              <p class="text-muted" style="margin-bottom: 18px;">Click Check In when your crew arrives at the job site today to start work.</p>
-              <form method="post" action="{{ url_for('checkin_task', task_id=task.id) }}">
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Check In Crew</button>
-              </form>
-            {% elif task.status == 'checked_in' %}
-              <!-- Complete Form -->
-              <p class="text-muted" style="margin-bottom: 18px;">Upload photo proof to mark this task complete and release the next trade.</p>
-              <form method="post" action="{{ url_for('complete_task', task_id=task.id) }}" enctype="multipart/form-data">
-                <label for="photo">Completion Photo (Required)</label>
-                <input type="file" id="photo" name="photo" accept="image/*" required style="background: rgba(15,23,42,0.4); border: 1px solid var(--panel-border); padding: 8px; border-radius: 8px;">
-                
-                <label for="caption">Notes / Captions</label>
-                <textarea id="caption" name="caption" rows="2" placeholder="e.g., Inspections signed off, clean site." style="margin-top: 6px;"></textarea>
-                
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 18px;">Submit &amp; Mark Complete</button>
-              </form>
-            {% elif task.status == 'complete' %}
-              <div class="alert-box alert-success" style="margin-bottom: 0;">
-                Task is completed. Handoff notification sent successfully.
-              </div>
-            {% endif %}
-
-            <!-- Delay reporting is available for active, incomplete tasks -->
-            {% if task.status in ('confirmed', 'checked_in', 'delayed') %}
-              <div style="border-top: 1px dashed var(--panel-border); margin-top: 24px; padding-top: 20px;">
-                <h3 class="text-danger" style="margin-bottom: 8px;">Report Schedule Delay</h3>
-                <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 12px;">If you cannot finish today or need to reschedule, report a delay immediately so the GC can shift downstream trades.</p>
-                <form method="post" action="{{ url_for('report_delay', task_id=task.id) }}">
-                  <label for="reason" style="margin-top: 0;">Delay Reason</label>
-                  <textarea id="reason" name="reason" rows="2" placeholder="e.g., Material delivery backordered, waiting for drywall inspect." required></textarea>
-                  <button type="submit" class="btn btn-danger" style="width: 100%; margin-top: 12px; padding: 10px;">Report Delay &amp; Alert GC</button>
-                </form>
-              </div>
-            {% endif %}
-          </div>
-        {% endif %}
-
-        <!-- Delay & Log History -->
-        <div class="card">
-          <h2>Task History Log</h2>
-          <p class="text-muted">Schedule changes and delay event reports</p>
-          
-          {% if task.delay_events %}
-            <div class="timeline" style="margin-top: 16px;">
-              {% for event in task.delay_events %}
-                <div class="timeline-item delayed">
-                  <div class="timeline-dot">!</div>
-                  <div class="timeline-content">
-                    <h4 class="text-danger" style="margin-bottom: 4px;">Delay Reported</h4>
-                    <p style="font-size: 0.9rem; margin-bottom: 8px;">{{ event.reason }}</p>
-                    <span style="font-size: 0.75rem;" class="text-muted">{{ event.reported_at.strftime('%b %d, %Y at %H:%M UTC') }}</span>
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="text-muted text-center" style="padding: 24px; border: 1px dashed var(--panel-border); border-radius: 12px; margin-top: 12px;">No schedule delays or incidents logged for this task.</p>
-          {% endif %}
-        </div>
+    {% if task.delay_events %}
+      <div class="card">
+        <h2>Delay history</h2>
+        {% for d in task.delay_events %}
+          <p><strong>{{ d.reported_at.strftime('%b %d, %Y %I:%M %p') }}</strong> — {{ d.reason }}</p>
+        {% endfor %}
       </div>
-    </div>
+    {% endif %}
   </main>
 </body>
 </html>

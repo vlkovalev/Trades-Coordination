@@ -3,67 +3,55 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Create Project — TradesSync</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <title>Create Project</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f8fafc; color: #0f172a; }
+    main { max-width: 700px; margin: 0 auto; padding: 24px 20px 56px; }
+    .card { background: white; border-radius: 14px; padding: 18px; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
+    label { display: block; margin-top: 12px; font-weight: bold; }
+    input { width: 100%; padding: 10px; margin-top: 6px; box-sizing: border-box; }
+    button { margin-top: 16px; background: #2563eb; color: white; border: none; padding: 10px 16px; border-radius: 999px; cursor: pointer; }
+    .errors { background: #fef2f2; color: #b91c1c; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; }
+    .consent-row { display: flex; align-items: flex-start; gap: 8px; margin-top: 18px; }
+    .consent-row input { width: auto; margin-top: 4px; }
+    .consent-text { font-size: 0.85rem; color: #444; font-weight: normal; }
+    a { display: inline-block; margin-bottom: 12px; }
+  </style>
 </head>
 <body>
-  <header>
-    <div class="nav-container">
-      <div class="logo">Trades<span>Sync</span></div>
-      <div class="user-badge">GC Portal</div>
-    </div>
-  </header>
-  
   <main>
-    <a href="{{ url_for('gc_dashboard') }}" style="display: inline-block; margin-bottom: 20px;">&larr; Back to dashboard</a>
-    
-    <div class="card" style="max-width: 700px; margin: 0 auto; padding: 32px;">
-      <h1 style="margin-bottom: 8px;">Create Construction Project</h1>
-      <p class="text-muted" style="margin-bottom: 28px;">Initialize a new project and capture homeowner compliance consent for automated notifications.</p>
-      
+    <a href="{{ url_for('gc_dashboard') }}">&larr; Back to dashboard</a>
+    <div class="card">
+      <h1>Create Project</h1>
       {% with messages = get_flashed_messages(category_filter=["error"]) %}
         {% if messages %}
-          <div class="alert-box alert-error">
+          <div class="errors">
             {% for message in messages %}<div>{{ message }}</div>{% endfor %}
           </div>
         {% endif %}
       {% endwith %}
-      
       <form method="post">
-        <div class="grid grid-2" style="gap: 16px;">
-          <div>
-            <label for="name" style="margin-top: 0;">Project Name</label>
-            <input id="name" name="name" value="{{ form.get('name', '') }}" placeholder="e.g., North ADU Construction" required>
-          </div>
-          <div>
-            <label for="address" style="margin-top: 0;">Job Site Address</label>
-            <input id="address" name="address" value="{{ form.get('address', '') }}" placeholder="e.g., 123 Main St, Metro" required>
-          </div>
+        <label for="name">Project name</label>
+        <input id="name" name="name" value="{{ form.get('name', '') }}" required>
+
+        <label for="address">Project address</label>
+        <input id="address" name="address" value="{{ form.get('address', '') }}" required>
+
+        <label for="client_name">Client name</label>
+        <input id="client_name" name="client_name" value="{{ form.get('client_name', '') }}" required>
+
+        <label for="client_phone">Client phone</label>
+        <input id="client_phone" name="client_phone" value="{{ form.get('client_phone', '') }}" placeholder="+15555550123" required>
+
+        <label for="client_email">Client email (optional)</label>
+        <input id="client_email" type="email" name="client_email" value="{{ form.get('client_email', '') }}">
+
+        <div class="consent-row">
+          <input type="checkbox" id="consent" name="consent" value="yes">
+          <label for="consent" class="consent-text" style="margin-top: 0;">{{ consent_text }}</label>
         </div>
 
-        <div class="grid grid-3" style="gap: 16px; margin-top: 12px;">
-          <div style="grid-column: span 1;">
-            <label for="client_name" style="margin-top: 0;">Homeowner Name</label>
-            <input id="client_name" name="client_name" value="{{ form.get('client_name', '') }}" placeholder="e.g., Alex Rivera" required>
-          </div>
-          <div style="grid-column: span 1;">
-            <label for="client_phone" style="margin-top: 0;">Homeowner Phone (SMS)</label>
-            <input id="client_phone" name="client_phone" value="{{ form.get('client_phone', '') }}" placeholder="+15555550123" required autocomplete="tel">
-          </div>
-          <div style="grid-column: span 1;">
-            <label for="client_email" style="margin-top: 0;">Homeowner Email (Opt)</label>
-            <input id="client_email" type="email" name="client_email" value="{{ form.get('client_email', '') }}" placeholder="client@example.com">
-          </div>
-        </div>
-
-        <div class="checkbox-row" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--panel-border); padding: 16px; border-radius: 12px; margin-top: 24px;">
-          <input type="checkbox" id="consent" name="consent" value="yes" checked>
-          <label for="consent" style="margin-top: 0; font-weight: normal; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
-            <strong>SMS Notification Consent:</strong> {{ consent_text }}
-          </label>
-        </div>
-
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px; padding: 14px;">Initialize Project &rarr;</button>
+        <button type="submit">Create project</button>
       </form>
     </div>
   </main>

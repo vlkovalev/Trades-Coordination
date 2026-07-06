@@ -132,3 +132,16 @@ class AuditLog(db.Model):
     entity_id = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     detail = db.Column(db.Text, nullable=True)
+
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), nullable=False)  # gc, trade, homeowner
+    trade_company_id = db.Column(db.Integer, db.ForeignKey("trade_company.id"), nullable=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=True)
+
+    trade_company = db.relationship("TradeCompany")
+    project = db.relationship("Project")
+
