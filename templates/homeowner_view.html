@@ -3,102 +3,254 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ project.name }} — Project Status</title>
+  <title>Client Progress Portal — Constrivo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f8fafc; color: #0f172a; }
-    main { max-width: 680px; margin: 0 auto; padding: 20px 16px 56px; }
-    .card { background: white; border-radius: 14px; padding: 16px; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); margin-bottom: 14px; }
-    .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: bold; }
-    .pill.pending { background: #e2e8f0; color: #475569; }
-    .pill.invited { background: #fef9c3; color: #92730b; }
-    .pill.confirmed { background: #dbeafe; color: #1d4ed8; }
-    .pill.checked_in { background: #e0f2fe; color: #0369a1; }
-    .pill.complete { background: #dcfce7; color: #166534; }
-    .pill.delayed { background: #fee2e2; color: #b91c1c; }
-    .timeline-item { border-bottom: 1px solid #e2e8f0; padding: 10px 0; }
-    .timeline-item:last-child { border-bottom: none; }
-    .delay-banner { background: #fee2e2; color: #b91c1c; padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; }
-    .topbar { display: flex; justify-content: space-between; align-items: center; }
-    .review-block { border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 12px; }
-    .review-block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
-    .review-block select { padding: 6px 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 6px; font-family: inherit; }
-    .review-block textarea { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-family: inherit; margin-top: 6px; }
-    .review-submit { display: block; margin-top: 8px; background: #2563eb; color: white; border: none; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 0.85rem; }
-    .existing-rating { color: #b45309; font-weight: bold; }
-    .alert-box { padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: 0.9rem; }
-    .alert-success { background: #dcfce7; color: #166534; }
-    .alert-error { background: #fee2e2; color: #b91c1c; }
+    .progress-bar-container {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 999px;
+      height: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      border: 1px solid var(--panel-border);
+    }
+    .progress-bar-fill {
+      background: linear-gradient(90deg, var(--accent-color), var(--status-complete));
+      height: 100%;
+      border-radius: 999px;
+      transition: width var(--transition-normal);
+    }
+    .client-timeline {
+      position: relative;
+      padding-left: 28px;
+      margin-top: 24px;
+    }
+    .client-timeline-item {
+      position: relative;
+      padding-bottom: 24px;
+    }
+    .client-timeline-item::before {
+      content: "";
+      position: absolute;
+      left: -22px;
+      top: 6px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      border: 2px solid var(--body-bg);
+      z-index: 2;
+    }
+    .client-timeline-item.complete::before {
+      background: var(--status-complete);
+      box-shadow: 0 0 8px var(--status-complete);
+    }
+    .client-timeline-item.active::before {
+      background: var(--accent-color);
+      box-shadow: 0 0 8px var(--accent-color);
+    }
+    .client-timeline::before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 10px;
+      bottom: 24px;
+      width: 2px;
+      background: var(--panel-border);
+      z-index: 1;
+    }
+    .photo-strip {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      margin-top: 14px;
+    }
+    .photo-strip img {
+      width: 140px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid var(--panel-border);
+    }
   </style>
 </head>
 <body>
-  <main>
-    <div class="topbar">
-      <h1>{{ project.name }}</h1>
-      <a href="{{ url_for('change_password') }}">Change Password</a> &middot;
-      <a href="{{ url_for('logout') }}">Logout</a>
+  <header>
+    <div class="nav-container">
+      <div class="logo">Constri<span>vo</span></div>
+      <div class="flex align-center gap-12">
+        <span class="user-badge">Client Progress Portal</span>
+        <a href="{{ url_for('change_password') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Change Password</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Logout</a>
+      </div>
     </div>
-    <p>{{ project.address }}</p>
-
+  </header>
+  
+  <main style="max-width: 800px;">
     {% with messages = get_flashed_messages(category_filter=["success", "error"]) %}
       {% if messages %}
         {% for message in messages %}
-          <div class="alert-box {% if 'saved' in message or 'Thank you' in message %}alert-success{% else %}alert-error{% endif %}">{{ message }}</div>
+          <div class="alert-box alert-success">{{ message }}</div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
-    {% if active_delays %}
-      {% for d in active_delays %}
-        <div class="delay-banner">Heads up — {{ d.task.name }} is running behind schedule. We'll share a new timeline soon.</div>
-      {% endfor %}
-    {% endif %}
-
     <div class="card">
-      <h2>What's next</h2>
-      {% if next_up %}
-        <p>{{ next_up.name }} — {{ plain_status.get(next_up.status, next_up.status) }}</p>
+      <h3 class="text-muted" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; margin-bottom: 4px;">Welcome Home</h3>
+      <h1 style="font-size: 2.2rem; margin-bottom: 12px;">{{ project.name }}</h1>
+      <p class="text-muted" style="margin-bottom: 24px;">Follow your renovation or building progress in real-time. Uncomplicated, visual, and transparent.</p>
+
+      {% set complete_tasks = tasks|selectattr('status', 'equalto', 'complete')|list %}
+      {% set total_tasks = tasks|length %}
+      {% if total_tasks > 0 %}
+        {% set progress_pct = (complete_tasks|length / total_tasks * 100)|int %}
       {% else %}
-        <p>All scheduled work is complete.</p>
+        {% set progress_pct = 0 %}
+      {% endif %}
+
+      <div class="flex justify-between align-center" style="margin-bottom: 8px; font-weight: 600; font-size: 0.95rem;">
+        <span>Overall Project Progress</span>
+        <span>{{ progress_pct }}% Complete</span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" style="width: {{ progress_pct }}%;"></div>
+      </div>
+
+      <div class="grid grid-2" style="font-size: 0.9rem; border-top: 1px solid var(--panel-border); padding-top: 16px;">
+        <div>
+          <span class="text-muted" style="font-size: 0.8rem;">Construction Site Address:</span>
+          <span style="font-weight: 500; display: block; margin-top: 2px;">{{ project.address }}</span>
+        </div>
+        <div>
+          <span class="text-muted" style="font-size: 0.8rem;">Project Budget Total:</span>
+          <span style="font-weight: 600; display: block; margin-top: 2px; color: var(--status-complete);">${{ "%.2f"|format(project.budget) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Reviews Section -->
+    <div class="card">
+      <h3>Reviews &amp; Ratings</h3>
+      <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 14px;">Leave feedback for trades who worked on your project.</p>
+      
+      {% set completed_trades = [] %}
+      {% for task in tasks %}
+        {% if task.status == 'complete' %}
+          {% for a in task.assignments %}
+            {% if a.status == 'accepted' and a.trade_company not in completed_trades %}
+              {% set _ = completed_trades.append(a.trade_company) %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+
+      {% if completed_trades %}
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+          {% for tc in completed_trades %}
+            {% set existing_review = tc.reviews|selectattr('project_id', 'equalto', project.id)|list|first %}
+            <div class="flex justify-between align-center" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--panel-border); padding: 12px; border-radius: 8px;">
+              <div>
+                <strong>{{ tc.name }}</strong> ({{ tc.trade_type|capitalize }})
+                {% if existing_review %}
+                  <div style="font-size: 0.8rem; color: var(--accent-color); margin-top: 4px;">
+                    you rated this {{ existing_review.rating }}/5 &bull; "{{ existing_review.comment }}"
+                  </div>
+                {% endif %}
+              </div>
+              <div>
+                {% if existing_review %}
+                  <span class="badge badge-complete" style="font-size: 0.7rem;">Review Saved</span>
+                {% else %}
+                  <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openReviewModal({{ tc.id }}, '{{ tc.name }}')">Rate Trade</button>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted" style="font-size: 0.85rem;">Completed trades will appear here for you to rate and review.</p>
       {% endif %}
     </div>
 
+    <!-- Timeline Progress Section -->
     <div class="card">
-      <h2>Project timeline</h2>
-      {% for task in tasks %}
-        <div class="timeline-item">
-          <strong>{{ task.name }}</strong>
-          <span class="pill {{ task.status }}">{{ plain_status.get(task.status, task.status) }}</span>
-        </div>
-      {% else %}
-        <p>No work scheduled yet.</p>
-      {% endfor %}
-    </div>
-
-    {% if reviewable_trades %}
-      <div class="card">
-        <h2>Rate your trades</h2>
-        <p style="color: #64748b; font-size: 0.85rem;">Once a trade finishes their work on your project, you can leave a rating here.</p>
-        {% for tc in reviewable_trades %}
-          {% set existing = existing_reviews.get(tc.id) %}
-          <div class="review-block">
-            <strong>{{ tc.name }}</strong>
-            {% if existing %}
-              <span class="existing-rating">— you rated this {{ existing.rating }}/5</span>
-            {% endif %}
-            <form method="post" action="{{ url_for('submit_review', project_id=project.id, trade_company_id=tc.id) }}">
-              <select name="rating" aria-label="Rating for {{ tc.name }}" required>
-                <option value="">Rate 1-5...</option>
-                {% for n in range(1, 6) %}
-                  <option value="{{ n }}" {% if existing and existing.rating == n %}selected{% endif %}>{{ n }} star{{ 's' if n != 1 else '' }}</option>
+      <h3 style="margin-bottom: 8px;">Construction Timeline</h3>
+      <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 20px;">Plain-language timeline explaining what is finished, what is active on site, and what comes next.</p>
+      
+      <div class="client-timeline">
+        {% for task in tasks %}
+          {% set is_active = (task.status in ('confirmed', 'checked_in', 'delayed')) %}
+          <div class="client-timeline-item {% if task.status == 'complete' %}complete{% elif is_active %}active{% endif %}">
+            <div class="flex justify-between align-center">
+              <div>
+                <strong style="font-size: 1.05rem;">{{ task.name }}</strong>
+                <span class="text-muted" style="display: block; font-size: 0.8rem; margin-top: 2px;">
+                  Trade: {{ task.trade_type_needed|capitalize }} &bull; Date: {{ task.scheduled_date or 'TBD' }}
+                </span>
+                
+                {% if task.status == 'complete' %}
+                  <span class="badge badge-complete" style="font-size: 0.65rem; margin-top: 6px; padding: 2px 6px;">Completed successfully</span>
+                {% elif task.status == 'checked_in' %}
+                  <span class="badge badge-checked_in" style="font-size: 0.65rem; margin-top: 6px; padding: 2px 6px;">Crew active on site</span>
+                {% elif task.status == 'delayed' %}
+                  <span class="badge badge-delayed" style="font-size: 0.65rem; margin-top: 6px; padding: 2px 6px;">Timeline adjusted</span>
+                {% else %}
+                  <span class="badge badge-pending" style="font-size: 0.65rem; margin-top: 6px; padding: 2px 6px;">Scheduled</span>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Uploaded photos display for this task -->
+            {% if task.photos %}
+              <div class="photo-strip">
+                {% for p in task.photos %}
+                  <img src="/static/uploads/{{ p.filename }}" alt="Progress Proof" title="Uploaded at {{ p.uploaded_at.strftime('%Y-%m-%d %H:%M') }}">
                 {% endfor %}
-              </select>
-              <textarea name="comment" rows="2" placeholder="Optional comment">{{ existing.comment if existing else '' }}</textarea>
-              <button type="submit" class="review-submit">{{ 'Update review' if existing else 'Submit review' }}</button>
-            </form>
+              </div>
+            {% endif %}
           </div>
+        {% else %}
+          <p class="text-muted">No scheduled tasks found for this project.</p>
         {% endfor %}
       </div>
-    {% endif %}
+    </div>
+
+    <!-- Review Form Modal (Hidden by default) -->
+    <div id="review-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="card" style="width: 100%; max-width: 450px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+        <h3 id="modal-trade-name" style="margin-bottom: 12px;">Rate Rivera Framing Co.</h3>
+        <form id="review-form" method="post" action="">
+          <label>Rating (1 to 5 Stars)<br>
+            <select name="rating" required style="margin-top: 6px; width: 100%;">
+              <option value="5">★★★★★ (5/5)</option>
+              <option value="4">★★★★☆ (4/5)</option>
+              <option value="3">★★★☆☆ (3/5)</option>
+              <option value="2">★★☆☆☆ (2/5)</option>
+              <option value="1">★☆☆☆☆ (1/5)</option>
+            </select>
+          </label><br><br>
+          <label>Comments / Feedback<br>
+            <textarea name="comment" rows="3" placeholder="e.g., Clean job site, punctual work..." required style="margin-top: 6px; width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border); border-radius: 6px; color: white; padding: 8px; font-family: inherit;"></textarea>
+          </label><br><br>
+          <div class="flex gap-12" style="justify-content: flex-end;">
+            <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Review</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </main>
+
+  <script>
+    function openReviewModal(tradeId, tradeName) {
+      document.getElementById('modal-trade-name').innerText = "Rate " + tradeName;
+      document.getElementById('review-form').action = "/projects/{{ project.id }}/trades/" + tradeId + "/review";
+      document.getElementById('review-modal').style.display = 'flex';
+    }
+    function closeReviewModal() {
+      document.getElementById('review-modal').style.display = 'none';
+    }
+  </script>
 </body>
 </html>

@@ -1,0 +1,1102 @@
+<title>Constrivo — Product Blueprint</title>
+<style>
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0F211D; --panel: #15332C; --panel-2: #1B3F36; --ink: #EAF3EF; --ink-dim: #A9C4BB;
+      --line: #2F5A4E; --line-soft: #1E3E36; --accent: #4FCBA8; --sidebar-ink: #D8EDE5;
+      --ready: #3FAE68; --at-risk: #E2A93B; --not-ready: #E2726F; --waiting: #93A5A0; --manual: #8B8FE0;
+    }
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #F6F7F5; --panel: #0F2C25; --panel-2: #15382F; --ink: #14231F; --ink-dim: #4C6259;
+      --line: #CBD8D1; --line-soft: #E1E9E4; --accent: #2F7A66; --sidebar-ink: #D8EDE5;
+      --ready: #2F9556; --at-risk: #B9800F; --not-ready: #C0524F; --waiting: #6C7D77; --manual: #6062B8;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F211D; --panel: #15332C; --panel-2: #1B3F36; --ink: #EAF3EF; --ink-dim: #A9C4BB;
+    --line: #2F5A4E; --line-soft: #1E3E36; --accent: #4FCBA8; --sidebar-ink: #D8EDE5;
+    --ready: #3FAE68; --at-risk: #E2A93B; --not-ready: #E2726F; --waiting: #93A5A0; --manual: #8B8FE0;
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F7F5; --panel: #0F2C25; --panel-2: #15382F; --ink: #14231F; --ink-dim: #4C6259;
+    --line: #CBD8D1; --line-soft: #E1E9E4; --accent: #2F7A66; --sidebar-ink: #D8EDE5;
+    --ready: #2F9556; --at-risk: #B9800F; --not-ready: #C0524F; --waiting: #6C7D77; --manual: #6062B8;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: Calibri, "Segoe UI", "Trebuchet MS", sans-serif;
+    font-size: 16px; line-height: 1.6;
+  }
+  h1, h2, h3, h4, .eyebrow, .stamp, th, .tag, .meter-label {
+    font-family: "Century Gothic", "Segoe UI Semibold", Calibri, sans-serif;
+  }
+  code, .mono, td.num, .stat-num { font-family: Consolas, "Cascadia Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  a { color: var(--accent); }
+
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 300px; flex: 0 0 300px; background: var(--panel); color: var(--sidebar-ink);
+    position: sticky; top: 0; height: 100vh; overflow-y: auto; border-right: 3px solid var(--accent);
+  }
+  .sidebar-head { padding: 22px 20px 16px; border-bottom: 1px solid var(--line-soft); }
+  .sidebar-head .stamp { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .sidebar-head h1 { font-size: 20px; margin: 8px 0 4px; line-height: 1.2; color: #fff; text-wrap: balance; }
+  .sidebar-head .sub { font-size: 12px; color: var(--sidebar-ink); opacity: .8; }
+  .toc { list-style: none; margin: 0; padding: 10px 0 30px; }
+  .toc a { display: flex; gap: 10px; padding: 7px 20px; font-size: 13px; color: var(--sidebar-ink); text-decoration: none; border-left: 3px solid transparent; }
+  .toc a .n { font-family: Consolas, monospace; color: var(--accent); flex: 0 0 20px; }
+  .toc a:hover { background: var(--panel-2); border-left-color: var(--accent); }
+
+  .main { flex: 1 1 auto; min-width: 0; padding: 0 0 100px; }
+  .titleblock { padding: 46px 56px 34px; border-bottom: 3px solid var(--accent); background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%); color: #fff; }
+  .titleblock .stamp { font-size: 12px; letter-spacing: .16em; color: var(--accent); text-transform: uppercase; }
+  .titleblock h1 { font-size: 34px; margin: 10px 0 8px; text-wrap: balance; }
+  .titleblock .sub { color: var(--sidebar-ink); font-size: 15px; max-width: 60ch; opacity: .9; }
+  .meter { display: flex; gap: 6px; margin-top: 20px; }
+  .meter .dot { width: 34px; height: 8px; border-radius: 4px; }
+  .meter-label { display: flex; gap: 18px; margin-top: 8px; font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--sidebar-ink); opacity: .85; flex-wrap: wrap; }
+  .meter-label span { display: flex; align-items: center; gap: 5px; }
+  .meter-label i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  section.sec { padding: 44px 56px; max-width: 1000px; }
+  section.sec + section.sec { border-top: 1px solid var(--line-soft); }
+  .sec .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+  .sec h2 { font-size: 27px; margin: 0 0 18px; text-wrap: balance; }
+  .sec h3 { font-size: 19px; margin: 30px 0 10px; color: var(--ink); }
+  .sec h4 { font-size: 15px; margin: 20px 0 8px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .04em; }
+  .sec p { max-width: 70ch; }
+  .sec ul, .sec ol { max-width: 70ch; padding-left: 22px; }
+  .sec li { margin: 4px 0; }
+  .lede { font-size: 18px; color: var(--ink-dim); max-width: 70ch; }
+
+  .table-wrap { overflow-x: auto; margin: 14px 0 26px; border: 1px solid var(--line); border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { background: var(--panel); color: #fff; font-weight: 600; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: color-mix(in srgb, var(--line-soft) 45%, transparent); }
+
+  .tag { display: inline-block; font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 2px; font-weight: 600; }
+  .tag-mvp { background: var(--ready); color: #06281d; }
+  .tag-v1 { background: var(--line); color: var(--ink); }
+  .tag-v2 { background: var(--at-risk); color: #3a2900; }
+  .tag-adv { background: var(--manual); color: #fff; }
+
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 2px 9px 2px 6px; border-radius: 999px; }
+  .status i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .status-ready { background: color-mix(in srgb, var(--ready) 18%, transparent); color: var(--ready); }
+  .status-ready i { background: var(--ready); }
+  .status-atrisk { background: color-mix(in srgb, var(--at-risk) 18%, transparent); color: var(--at-risk); }
+  .status-atrisk i { background: var(--at-risk); }
+  .status-notready { background: color-mix(in srgb, var(--not-ready) 18%, transparent); color: var(--not-ready); }
+  .status-notready i { background: var(--not-ready); }
+  .status-waiting { background: color-mix(in srgb, var(--waiting) 22%, transparent); color: var(--waiting); }
+  .status-waiting i { background: var(--waiting); }
+  .status-manual { background: color-mix(in srgb, var(--manual) 18%, transparent); color: var(--manual); }
+  .status-manual i { background: var(--manual); }
+
+  .callout { position: relative; margin: 22px 0; padding: 14px 18px 14px 22px; background: color-mix(in srgb, var(--line-soft) 55%, transparent); border-left: 3px solid var(--accent); border-radius: 0 3px 3px 0; max-width: 70ch; }
+  .callout .cap { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: 4px; }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 18px 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0; }
+  @media (max-width: 720px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+  .card { border: 1px solid var(--line); border-radius: 4px; padding: 14px 16px; background: color-mix(in srgb, var(--line-soft) 35%, transparent); }
+  .card h4 { margin-top: 0; color: var(--accent); }
+  .card p { font-size: 14px; margin: 4px 0 0; }
+
+  .roadmap-phase { border: 1px solid var(--line); border-radius: 4px; margin: 16px 0; overflow: hidden; }
+  .roadmap-phase .ph-head { background: var(--panel); color: #fff; padding: 10px 18px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .roadmap-phase .ph-head b { font-size: 15px; }
+  .roadmap-phase .ph-head span { font-size: 11px; color: var(--sidebar-ink); opacity: .8; font-family: Consolas, monospace; }
+  .roadmap-phase .ph-body { padding: 14px 18px; }
+
+  .sev { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+  .sev::before { content: ""; width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .sev-high::before { background: var(--not-ready); }
+  .sev-med::before { background: var(--at-risk); }
+  .sev-low::before { background: var(--ready); }
+
+  .final-rec { background: var(--panel); color: #fff; padding: 30px 32px; border-radius: 6px; margin-top: 20px; border-top: 3px solid var(--accent); }
+  .final-rec h3 { color: var(--accent); margin-top: 0; }
+  .final-rec p { color: var(--sidebar-ink); max-width: 72ch; }
+
+  .backtotop { display: inline-block; margin-top: 20px; font-size: 12px; color: var(--ink-dim); text-decoration: none; }
+  @media print { .sidebar { display: none; } }
+</style>
+
+<div class="shell">
+  <nav class="sidebar">
+    <div class="sidebar-head">
+      <div class="stamp">Product Blueprint · Rev A</div>
+      <h1>Constrivo</h1>
+      <div class="sub">Trade coordination + homeowner communication + site readiness + progress proof</div>
+    </div>
+    <ul class="toc">
+      <li><a href="#s1"><span class="n">01</span> Executive Summary</a></li>
+      <li><a href="#s2"><span class="n">02</span> Product Positioning</a></li>
+      <li><a href="#s3"><span class="n">03</span> Core User Pain Points</a></li>
+      <li><a href="#s4"><span class="n">04</span> Main User Journeys</a></li>
+      <li><a href="#s5"><span class="n">05</span> Website Structure</a></li>
+      <li><a href="#s6"><span class="n">06</span> Web App Structure</a></li>
+      <li><a href="#s7"><span class="n">07</span> Mobile App Structure</a></li>
+      <li><a href="#s8"><span class="n">08</span> Homeowner Portal Blueprint</a></li>
+      <li><a href="#s9"><span class="n">09</span> Contractor Dashboard Blueprint</a></li>
+      <li><a href="#s10"><span class="n">10</span> Trade Mobile App Blueprint</a></li>
+      <li><a href="#s11"><span class="n">11</span> Core Feature Blueprint</a></li>
+      <li><a href="#s12"><span class="n">12</span> Trade Readiness Checklist System</a></li>
+      <li><a href="#s13"><span class="n">13</span> Automatic Communication System</a></li>
+      <li><a href="#s14"><span class="n">14</span> Change Order &amp; Approval Workflow</a></li>
+      <li><a href="#s15"><span class="n">15</span> Progress Proof &amp; Daily Reports</a></li>
+      <li><a href="#s16"><span class="n">16</span> Data Model &amp; Architecture</a></li>
+      <li><a href="#s17"><span class="n">17</span> MVP Scope</a></li>
+      <li><a href="#s18"><span class="n">18</span> UX Principles</a></li>
+      <li><a href="#s19"><span class="n">19</span> Testing &amp; QA Plan</a></li>
+      <li><a href="#s20"><span class="n">20</span> Pricing &amp; Revenue Model</a></li>
+      <li><a href="#s21"><span class="n">21</span> Go-To-Market Strategy</a></li>
+      <li><a href="#s22"><span class="n">22</span> Product Roadmap</a></li>
+      <li><a href="#s23"><span class="n">23</span> Final Build Priorities</a></li>
+    </ul>
+  </nav>
+
+  <main class="main">
+    <div class="titleblock">
+      <div class="stamp">Sheet Index · Readiness-First Coordination</div>
+      <h1>Constrivo</h1>
+      <p class="sub">A homeowner-friendly trade coordination platform that keeps projects moving, trades informed, and homeowners updated automatically — built around readiness, communication, and proof, not just a calendar.</p>
+      <div class="meter">
+        <div class="dot" style="background:var(--ready)"></div>
+        <div class="dot" style="background:var(--at-risk)"></div>
+        <div class="dot" style="background:var(--not-ready)"></div>
+        <div class="dot" style="background:var(--waiting)"></div>
+        <div class="dot" style="background:var(--manual)"></div>
+      </div>
+      <div class="meter-label">
+        <span><i style="background:var(--ready)"></i>Ready</span>
+        <span><i style="background:var(--at-risk)"></i>At Risk</span>
+        <span><i style="background:var(--not-ready)"></i>Not Ready</span>
+        <span><i style="background:var(--waiting)"></i>Waiting on Confirmation</span>
+        <span><i style="background:var(--manual)"></i>Manual Review Needed</span>
+      </div>
+    </div>
+    <section class="sec" id="s1">
+      <div class="eyebrow">01 · Executive Summary</div>
+      <h2>The two questions this product exists to answer</h2>
+      <p class="lede">For a homeowner: "What is happening with my project?" For a trade: "Am I actually ready to go to this job?" Every feature in this blueprint is in service of answering one of those two questions automatically, instead of by phone call.</p>
+
+      <p>Constrivo is a trade coordination and homeowner communication platform — not a scheduling app. A scheduling app tells you a date. It cannot tell a trade that the framer isn't actually done, that the drywall hasn't been delivered, or that the homeowner hasn't been told a crew is coming tomorrow. Those are the failures that actually cost money: wasted trade trips, blindsided homeowners, and disputes that trace back to "nobody told me." Constrivo's core mechanic — a readiness check that runs <em>before</em> a trade is dispatched — is what a calendar structurally cannot do.</p>
+
+      <div class="grid-3">
+        <div class="card">
+          <h4>For homeowners</h4>
+          <p>Always know who's coming, when, what's planned, why a delay happened, and what decision is waiting on them — in plain language, without calling to ask.</p>
+        </div>
+        <div class="card">
+          <h4>For contractors</h4>
+          <p>One dashboard for today/tomorrow/late work, site-readiness issues, pending approvals, and daily reports — instead of being the manual relay between every trade and every homeowner.</p>
+        </div>
+        <div class="card">
+          <h4>For trades</h4>
+          <p>Know before you drive whether the site is actually ready, get the scope and drawings in the invite itself, and prove completion with a photo instead of a phone call.</p>
+        </div>
+      </div>
+
+      <h3>Why site readiness is the winning feature</h3>
+      <p>Every other pain point in this document — wasted trips, homeowner surprise, disputed delays — traces back to one root cause: nobody checked whether the job was actually ready before someone showed up expecting to work. A readiness checklist that runs automatically before dispatch (Section 12) turns that root cause into a solved problem instead of a recurring one.</p>
+
+      <h3>Why progress proof and automatic updates matter</h3>
+      <p>Homeowner-contractor disputes are disproportionately caused by miscommunication and lack of transparency, not workmanship. Photo-backed daily reports and automatic, plain-language homeowner updates (Sections 13 &amp; 15) remove the ambiguity that disputes grow in — there's a timestamped record of what happened and why, not two conflicting memories of a phone call.</p>
+
+      <h3>What the MVP should focus on</h3>
+      <p>Timeline, trade invite/confirm, the readiness checklist, mobile trade check-in/complete with photo, automatic homeowner updates, change order approval, and daily reports (Section 17). That's the full coordination loop — everything else waits.</p>
+
+      <h3>What should wait</h3>
+      <p>AI scheduling, deep accounting/payments, full municipal integrations, and a materials marketplace are all real value later, not launch requirements — see Section 22 for sequencing.</p>
+
+      <div class="callout"><div class="cap">How to read this document</div>The five-dot meter at the top of this page is the platform's actual readiness-state vocabulary (Section 12) — Ready, At Risk, Not Ready, Waiting on Confirmation, Manual Review Needed. You'll see it reused throughout as the real status language, not decoration.</div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s2">
+      <div class="eyebrow">02 · Product Positioning</div>
+      <h2>A coordination and communication platform, not a calendar</h2>
+
+      <div class="grid-2">
+        <div class="card"><h4>Product category</h4><p>Construction coordination and homeowner communication platform.</p></div>
+        <div class="card"><h4>Positioning statement</h4><p>Constrivo helps contractors keep trades, clients, schedules, approvals, and site readiness aligned — automatically, not through another round of phone calls.</p></div>
+      </div>
+
+      <h3>Tagline options</h3>
+      <ul>
+        <li>"Stop chasing trades. Stop guessing what happens next."</li>
+        <li>"Know if you're actually ready to go."</li>
+        <li>"Every trade informed. Every homeowner updated. Automatically."</li>
+        <li>"The site tells you when it's ready — not the other way around."</li>
+      </ul>
+
+      <h3>Homepage hero headline options</h3>
+      <ul>
+        <li>"Stop chasing trades. Stop guessing what happens next."</li>
+        <li>"Know your site is ready before anyone drives there."</li>
+        <li>"Homeowners informed. Trades ready. Contractors in control."</li>
+      </ul>
+      <h3>Homepage subheadline options</h3>
+      <ul>
+        <li>"Constrivo keeps homeowners, contractors, and trades connected from schedule to completion — with a readiness check before every dispatch."</li>
+        <li>"Automatic homeowner updates, a readiness check before every trade is dispatched, and photo-backed proof of what happened on site."</li>
+      </ul>
+
+      <h3>Main value proposition</h3>
+      <p>Other tools schedule dates. Constrivo verifies readiness before a trade is dispatched, updates the homeowner automatically as real things happen, and produces a photo-backed record of every day on site — the three things that actually prevent wasted trips, surprised clients, and he-said-she-said disputes.</p>
+
+      <h3>Differentiation statement</h3>
+      <p>This is not scheduling software, calendar software, task management software, or a contractor messaging app. Those tools manage dates and threads. Constrivo verifies a real-world condition (is the site actually ready) before letting a dispatch happen, and that single mechanic is what the rest of the product — homeowner trust, trade adoption, dispute reduction — is built on top of.</p>
+
+      <div class="grid-2">
+        <div class="card"><h4>Who it's for</h4><p>Residential remodelers, ADU builders, and small-to-mid general contractors coordinating multiple trades per project who are currently doing that coordination by phone and text.</p></div>
+        <div class="card"><h4>Who it's not for</h4><p>Large commercial GCs who need heavyweight document control and enterprise PM (Procore's territory), or contractors running a single trade with no homeowner-facing complexity.</p></div>
+      </div>
+
+      <h3>Messaging by audience</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Audience</th><th>Message focus</th></tr>
+        <tr><td>Homeowners</td><td>Know who's coming, when, and what's planned. Understand delays instead of guessing. See progress in photos. Approve changes clearly, with cost spelled out — no surprises.</td></tr>
+        <tr><td>Contractors</td><td>Stop chasing trades and reduce phone calls. Know what's happening today and tomorrow. Prevent wasted trips. Keep homeowners updated automatically. Track approvals and photos. Reduce disputes.</td></tr>
+        <tr><td>Trades</td><td>Know if the site is ready before you drive there. Get clear scope and drawings up front. Confirm jobs in seconds. Report delays easily. Prove completion with photos.</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s3">
+      <div class="eyebrow">03 · Core User Pain Points</div>
+      <h2>What's actually broken today, by user</h2>
+
+      <h3>Homeowner pain points</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Pain point</th><th>Root cause</th><th>Current workaround</th><th>Business impact</th><th>Constrivo feature</th><th>MVP</th></tr>
+        <tr><td>No communication</td><td>Updates depend on the contractor remembering to call</td><td>Homeowner calls when anxious</td><td>Erodes trust, generates negative reviews about "communication"</td><td>Automatic Homeowner Updates (§13)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>No clear schedule</td><td>Schedule lives in the contractor's head or a paper board</td><td>Ask at the next call</td><td>Homeowner can't plan around crew visits (pets, parking, access)</td><td>Project Timeline (§11-A)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Trades not showing up</td><td>No binding confirmation step before dispatch</td><td>Contractor calls the night before to "confirm"</td><td>Wasted homeowner access-prep, lost trust</td><td>Trade Confirmation (§11-D)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Delays with no explanation</td><td>Delay reasons aren't captured or relayed</td><td>Homeowner finds out when the crew doesn't show</td><td>Anger proportional to surprise, not the delay itself</td><td>Delay reporting → automatic explanation (§11-H)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Surprise costs</td><td>Change orders communicated verbally or informally</td><td>Contractor mentions it, homeowner forgets the number</td><td>Payment disputes, damaged trust</td><td>Change Order Approval (§14)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Messy job sites</td><td>No visibility into daily site condition</td><td>Homeowner walks the site and worries</td><td>Perceived unprofessionalism</td><td>Daily Report with photos (§15)</td><td><span class="tag tag-v1">V1</span></td></tr>
+        <tr><td>Poor progress visibility</td><td>Progress lives in the contractor's head</td><td>Ask at the next call</td><td>Feels like nothing is happening even when it is</td><td>Progress Proof / photo timeline (§15)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Not knowing who's coming and when</td><td>No shared calendar exposed to the homeowner</td><td>Text the contractor and wait</td><td>Missed access windows</td><td>Homeowner Portal — Today's Work (§8)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Decisions requested too late</td><td>No structured "decision needed" queue</td><td>Contractor calls under time pressure</td><td>Rushed, resentful decisions</td><td>Decisions Needed page (§8)</td><td><span class="tag tag-v1">V1</span></td></tr>
+        <tr><td>Unclear change orders</td><td>No standard format for cost/schedule impact</td><td>Verbal mention or a text</td><td>Disputes over "I didn't agree to that"</td><td>Change Order Approval (§14)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+      </table></div>
+
+      <h3>Contractor pain points</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Pain point</th><th>Root cause</th><th>Current workaround</th><th>Business impact</th><th>Constrivo feature</th><th>MVP</th></tr>
+        <tr><td>Endless phone calls</td><td>Phone is the only synchronization mechanism that works today</td><td>Answer every call personally</td><td>Contractor becomes the bottleneck for every status question</td><td>Role-specific dashboards + auto-notifications (§13)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Trades don't confirm</td><td>No binding acceptance step</td><td>Call the night before</td><td>No-shows, cascading delay</td><td>Trade Confirmation with escalation (§11-D)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Schedules change constantly</td><td>One slip doesn't recalculate anything downstream</td><td>Manually re-call every affected party</td><td>Redundant labor, wasted dispatch</td><td>Readiness-aware timeline (§11-A)</td><td><span class="tag tag-v1">V1</span></td></tr>
+        <tr><td>No visibility into site readiness</td><td>Readiness isn't tracked as a discrete, checkable state</td><td>Find out when the trade calls from an empty site</td><td>Wasted trade trips, trade frustration</td><td>Trade Readiness Checklist (§12)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Homeowner confusion</td><td>No single source of truth shared with the client</td><td>Repeat the same explanation on every call</td><td>Time drain, inconsistent messaging</td><td>Homeowner Portal (§8)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Manual daily updates</td><td>Every update is a one-off, unaided action</td><td>Text a summary at the end of the day, inconsistently</td><td>Contractor time drain, inconsistent client experience</td><td>Auto-generated Daily Report (§15)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Missed approvals</td><td>Approvals requested informally, easy to lose track of</td><td>Ask again, hope they remember</td><td>Work stalls or proceeds without real approval</td><td>Change Order Board (§9)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Change order disputes</td><td>No documented cost/schedule impact trail</td><td>He-said-she-said</td><td>Payment disputes, reviews, legal exposure</td><td>Change Order audit trail (§14)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Material and inspection delays</td><td>Not modeled as schedule dependencies</td><td>Discover the delay when a trade shows up blocked</td><td>Wasted dispatch, downstream cascade</td><td>Readiness Checklist blocking items (§12)</td><td><span class="tag tag-v2">V2</span></td></tr>
+        <tr><td>No proof of what happened on site</td><td>No structured daily capture of activity</td><td>Memory and goodwill</td><td>Indefensible in a dispute</td><td>Progress Proof (§15)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+      </table></div>
+
+      <h3>Trade pain points</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Pain point</th><th>Root cause</th><th>Current workaround</th><th>Business impact</th><th>Constrivo feature</th><th>MVP</th></tr>
+        <tr><td>Double-booking</td><td>Trades run their own calendar separately per contractor</td><td>Mental tracking across every contractor's texts</td><td>Missed jobs, damaged relationships</td><td>Trade Confirmation status (§11-D)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Last-minute schedule changes</td><td>Delays aren't propagated automatically</td><td>Find out when they show up</td><td>Wasted crew-day</td><td>Automatic re-notification on delay (§13)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Missing drawings or specs</td><td>Documents emailed once, go stale after revisions</td><td>Call the office for the latest PDF</td><td>Wrong work performed, rework</td><td>Documents &amp; Drawings (§11-I)</td><td><span class="tag tag-v1">V1</span></td></tr>
+        <tr><td>Wrong address / bad access instructions</td><td>Address and access notes retyped by hand</td><td>Call on arrival day</td><td>Late arrival, wasted drive time</td><td>Job Detail screen (§10)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Previous trade not finished</td><td>No visibility into predecessor task status</td><td>Show up and hope</td><td>Wasted trips, idle crew-days</td><td>Readiness Checklist (§12)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Materials not ready</td><td>Delivery status not linked to the task</td><td>Discover on arrival</td><td>Wasted dispatch</td><td>Readiness Checklist — materials item (§12)</td><td><span class="tag tag-v2">V2</span></td></tr>
+        <tr><td>Waiting for inspection</td><td>Inspection status not modeled as a gate</td><td>Call the contractor to ask</td><td>Wasted dispatch, downstream cascade</td><td>Readiness Checklist — inspection item (§12)</td><td><span class="tag tag-v2">V2</span></td></tr>
+        <tr><td>Too many calls/texts</td><td>Phone is the only channel that reliably works</td><td>Answer every call</td><td>Time drain for a low-margin trade business</td><td>SMS-first mobile workflow (§7)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>No proof of completion</td><td>Completion reported verbally or not at all</td><td>Text a photo to the contractor's personal phone</td><td>Disputes over whether work was done/done correctly</td><td>Photo Proof (§11-E)</td><td><span class="tag tag-mvp">MVP</span></td></tr>
+        <tr><td>Slow payment / unclear invoice status</td><td>No shared visibility into invoice state</td><td>Call and ask</td><td>Cash-flow stress for the trade</td><td>Payment/Invoice Status (§11-J)</td><td><span class="tag tag-v2">V2</span></td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s4">
+      <div class="eyebrow">04 · Main User Journeys</div>
+      <h2>Invite to completion, for all three people</h2>
+
+      <h3>A. Homeowner journey</h3>
+      <div class="table-wrap"><table>
+        <tr><th>#</th><th>Step</th><th>User goal</th><th>Screen</th><th>Key info shown</th><th>Action required</th><th>Notification</th><th>Possible confusion</th><th>UX safeguard</th><th>Success metric</th></tr>
+        <tr><td class="num">1</td><td>Invited to project</td><td>Understand what this is</td><td>Invite email/SMS</td><td>Project name, contractor, what to expect</td><td>Click secure link</td><td>Invite email/SMS</td><td>"Is this spam?"</td><td>Contractor branding, no password required for first view</td><td>Invite-to-first-view time</td></tr>
+        <tr><td class="num">2</td><td>Log in / open secure link</td><td>Get in without friction</td><td>Login / magic link</td><td>—</td><td>Enter code or tap link</td><td>None</td><td>Forgotten password</td><td>Passwordless secure-link option</td><td>Login success rate</td></tr>
+        <tr><td class="num">3</td><td>See project timeline</td><td>Understand the whole plan</td><td>Timeline</td><td>Phases, current position, plain-language status</td><td>None — read only</td><td>None</td><td>Construction jargon</td><td>Plain-language status copy (no "rough-in")</td><td>Time-on-page (engagement)</td></tr>
+        <tr><td class="num">4</td><td>See today's work</td><td>Know what's happening right now</td><td>Today's Work</td><td>Trade on site, task, expected duration</td><td>None</td><td>None</td><td>"Is anyone actually coming today?"</td><td>Always shows a state, never blank with no explanation</td><td>Inbound "what's happening" calls</td></tr>
+        <tr><td class="num">5</td><td>Receive crew arrival update</td><td>Prepare for the visit</td><td>Push/SMS</td><td>Trade company name, arrival window, planned work</td><td>Optional: confirm access</td><td>Upcoming crew SMS/push</td><td>Vague arrival window</td><td>Real window, not "sometime today"</td><td>% of visits with prior notice</td></tr>
+        <tr><td class="num">6</td><td>Receive delay explanation</td><td>Understand why, not just that</td><td>Push/SMS + Delays page</td><td>Reason (non-technical), new target date</td><td>None</td><td>Delay SMS/push</td><td>Feeling blamed or stonewalled</td><td>Non-blaming language (§12), always a next-step</td><td>Delay-related complaint rate</td></tr>
+        <tr><td class="num">7</td><td>Review progress photos</td><td>See real progress</td><td>Progress Photos</td><td>Dated photos per task</td><td>None — read only</td><td>Daily report notice</td><td>Photos feel generic</td><td>Photos tagged to specific task/date, not a generic gallery</td><td>Photo view rate</td></tr>
+        <tr><td class="num">8</td><td>Approve/reject change order</td><td>Make an informed decision</td><td>Change Orders</td><td>Reason, cost before/after, schedule before/after</td><td>Approve, reject, or ask a question</td><td>Change order request</td><td>Hidden or unclear cost impact</td><td>Cost/schedule impact always shown explicitly, never buried</td><td>Time-to-decision, dispute rate</td></tr>
+        <tr><td class="num">9</td><td>Answer decision request</td><td>Unblock the project</td><td>Decisions Needed</td><td>What's being asked, deadline, options</td><td>Choose an option or respond</td><td>Decision-needed alert</td><td>Feeling rushed</td><td>Deadline shown with enough lead time flagged</td><td>Decisions answered before deadline</td></tr>
+        <tr><td class="num">10</td><td>Receive daily report</td><td>Know what happened today</td><td>Daily Report</td><td>Work done, photos, delays, what's next</td><td>None — read only</td><td>Daily report notice</td><td>Report feels like noise if sent every day regardless</td><td>Sent on real activity days, not a padded template</td><td>Report open rate</td></tr>
+        <tr><td class="num">11</td><td>Track payment milestone</td><td>Know what's owed and why</td><td>Payment Milestones</td><td>Milestone, amount, status</td><td>Pay or acknowledge, if enabled</td><td>Milestone reached alert</td><td>Confusing milestone-vs-invoice terms</td><td>Plain labels tied to visible completed work</td><td>On-time payment rate</td></tr>
+        <tr><td class="num">12</td><td>Review punch list/warranty item</td><td>Confirm work is truly finished</td><td>Punch List</td><td>Item, status, photo</td><td>Confirm resolved or flag an issue</td><td>Item resolved notice</td><td>Feeling nothing gets fixed after "done"</td><td>Items stay visible/trackable post-completion</td><td>Punch items closed within SLA</td></tr>
+        <tr><td class="num">13</td><td>Project completed</td><td>Closure and confidence</td><td>Project Overview</td><td>Completion summary, final photos, documents</td><td>None</td><td>Project complete notice</td><td>Feeling abandoned post-completion</td><td>Portal stays accessible after close for warranty reference</td><td>Post-completion satisfaction / review rate</td></tr>
+      </table></div>
+
+      <h3>B. Contractor journey</h3>
+      <div class="table-wrap"><table>
+        <tr><th>#</th><th>Step</th><th>User goal</th><th>System action</th><th>Data required</th><th>Automation opportunity</th><th>Risk</th><th>Safeguard</th><th>Success metric</th></tr>
+        <tr><td class="num">1</td><td>Create project</td><td>Establish the project record</td><td>Creates project shell</td><td>Name, address, project type</td><td>Template by project type</td><td>Duplicate/incomplete records</td><td>Address/client dedup check</td><td>Time to first usable project</td></tr>
+        <tr><td class="num">2</td><td>Add homeowner/client</td><td>Get the client connected</td><td>Sends portal invite</td><td>Name, phone/email</td><td>Auto-send invite on save</td><td>Wrong contact info</td><td>Confirmation step before sending</td><td>Invite acceptance rate</td></tr>
+        <tr><td class="num">3</td><td>Add schedule/timeline</td><td>Lay out the plan</td><td>Creates timeline phases</td><td>Phases, target dates</td><td>Template timeline by project type</td><td>Unrealistic dates</td><td>Flag phases with no duration data</td><td>Timeline completeness at project start</td></tr>
+        <tr><td class="num">4</td><td>Add trade tasks</td><td>Break the timeline into assignable work</td><td>Creates tasks with sequence</td><td>Trade type, scope, sequence</td><td>Standard sequence templates per project type</td><td>Wrong sequencing</td><td>Manual review before publishing</td><td>% of tasks needing later re-sequencing</td></tr>
+        <tr><td class="num">5</td><td>Invite trades</td><td>Get a company committed to the task</td><td>Sends invite with scope/address/dates</td><td>Trade company, task, dates</td><td>Suggest trade by type/availability</td><td>No trade available in window</td><td>Auto-suggest alternate trade/date</td><td>Median time-to-confirm</td></tr>
+        <tr><td class="num">6</td><td>Add drawings/specs</td><td>Give trades what they need to do the work right</td><td>Attaches documents to tasks</td><td>Files, task links</td><td>Flag tasks with no attached drawing</td><td>Outdated revision used</td><td>Version history, "current" always resolved automatically</td><td>Rework incidents from outdated docs</td></tr>
+        <tr><td class="num">7</td><td>Add site access instructions</td><td>Prevent wasted arrival confusion</td><td>Attaches access notes to project</td><td>Gate codes, parking, contact</td><td>Reusable per-property template</td><td>Missing/stale instructions</td><td>Required field before first trade invite</td><td>Access-related delay incidents</td></tr>
+        <tr><td class="num">8</td><td>Add materials/inspection dependencies</td><td>Model real blocking conditions</td><td>Links delivery/inspection to tasks</td><td>Delivery dates, inspection type</td><td>Flag insufficient lead time</td><td>Dependency modeled too late</td><td>Prompt at task-creation time</td><td>% of tasks with dependencies attached</td></tr>
+        <tr><td class="num">9</td><td>Send homeowner project view</td><td>Get the client into the loop</td><td>Activates portal access</td><td>—</td><td>Auto-activate on first invite</td><td>Client never logs in</td><td>SMS fallback with a direct summary</td><td>Portal activation rate</td></tr>
+        <tr><td class="num">10</td><td>Monitor today/tomorrow dashboard</td><td>Run the day without guessing</td><td>Surfaces due/at-risk items</td><td>—</td><td>Auto-flag at-risk tasks</td><td>Alert fatigue</td><td>Priority-ranked, not a flat list</td><td>Time spent per day managing status</td></tr>
+        <tr><td class="num">11</td><td>Receive trade confirmation</td><td>Know the job is actually covered</td><td>Updates task status</td><td>—</td><td>Auto-notify homeowner on confirm</td><td>Trade confirms without real capacity</td><td>Crew-capacity confirmation step</td><td>No-show rate post-confirmation</td></tr>
+        <tr><td class="num">12</td><td>Receive delay/issue report</td><td>React before it cascades</td><td>Logs delay, recalculates downstream</td><td>Reason, new estimate</td><td>Auto-notify affected parties</td><td>Delay hidden until too late</td><td>Delay reporting is one tap, not a form</td><td>Time from delay to all-parties-notified</td></tr>
+        <tr><td class="num">13</td><td>Approve schedule adjustment</td><td>Keep the plan trustworthy</td><td>Publishes revised timeline</td><td>—</td><td>Auto-draft the adjustment</td><td>Silent changes erode trust</td><td>Change summary shown before publishing</td><td>Homeowner-reported schedule surprises</td></tr>
+        <tr><td class="num">14</td><td>Send change order</td><td>Get paid for real scope changes, cleanly</td><td>Creates change order record</td><td>Reason, cost, schedule impact</td><td>Auto-draft from field-reported scope change</td><td>Cost hidden or vague</td><td>Cost/schedule impact mandatory fields</td><td>Change order dispute rate</td></tr>
+        <tr><td class="num">15</td><td>Send daily report</td><td>Keep the homeowner informed without extra work</td><td>Compiles day's activity into a report</td><td>—</td><td>Fully auto-generated from field data</td><td>Generic/padded report feels hollow</td><td>Only sent on days with real activity</td><td>Reduction in "what's happening" calls</td></tr>
+        <tr><td class="num">16</td><td>Close project</td><td>Wrap up cleanly</td><td>Marks project complete, archives record</td><td>Punch list resolution</td><td>Completion checklist auto-check</td><td>Loose ends untracked</td><td>Completion checklist required before close</td><td>Post-close support tickets</td></tr>
+      </table></div>
+
+      <h3>C. Trade journey</h3>
+      <div class="table-wrap"><table>
+        <tr><th>#</th><th>Step</th><th>Trade goal</th><th>Mobile screen</th><th>Required action</th><th>Min. taps</th><th>Data captured</th><th>Failure risk</th><th>Safeguard</th><th>Success metric</th></tr>
+        <tr><td class="num">1</td><td>Receive job invite</td><td>Understand the ask fast</td><td>Push notification</td><td>Open notification</td><td>1</td><td>—</td><td>Invite ignored</td><td>SMS fallback if push not opened in a window</td><td>Invite open rate</td></tr>
+        <tr><td class="num">2</td><td>Check date/address/scope/readiness</td><td>Decide if this job works</td><td>Job Details</td><td>Review</td><td>0 (read)</td><td>—</td><td>Incomplete info at invite time</td><td>Invite blocked from sending until scope+address attached</td><td>Time from invite to decision</td></tr>
+        <tr><td class="num">3</td><td>Accept / decline / propose date</td><td>Commit or redirect quickly</td><td>Job Details</td><td>Tap accept/decline/propose</td><td>1-2</td><td>Response, alternate date if proposed</td><td>No response at all</td><td>Auto-escalate to backup trade after timeout</td><td>Median time-to-respond</td></tr>
+        <tr><td class="num">4</td><td>Receive reminder before work</td><td>Don't forget the job</td><td>Push/SMS</td><td>Acknowledge (optional)</td><td>0-1</td><td>—</td><td>Reminder ignored</td><td>Reminder timed to allow real reaction time</td><td>No-show rate</td></tr>
+        <tr><td class="num">5</td><td>Check readiness before dispatch</td><td>Avoid a wasted trip</td><td>Job Details / Readiness</td><td>Review readiness status</td><td>0 (read)</td><td>—</td><td>Trade dispatches anyway despite a warning</td><td>Clear, hard-to-miss Not Ready banner</td><td>Wasted-trip rate</td></tr>
+        <tr><td class="num">6</td><td>Navigate to site</td><td>Get there without confusion</td><td>Job Details</td><td>Tap navigate</td><td>1</td><td>—</td><td>Wrong address</td><td>Address is a structured, verified field</td><td>Late-arrival-from-navigation-error rate</td></tr>
+        <tr><td class="num">7</td><td>Check in</td><td>Establish "I'm here"</td><td>Check-In</td><td>Tap check in</td><td>1</td><td>Timestamp, optional geolocation</td><td>Forgotten check-in</td><td>Reminder nudge shortly after scheduled start</td><td>Check-in rate vs. scheduled starts</td></tr>
+        <tr><td class="num">8</td><td>View drawings/specs</td><td>Do the work correctly</td><td>Documents</td><td>Review</td><td>0 (read)</td><td>—</td><td>Outdated drawing viewed offline</td><td>Explicit "drawing updated" alert on revision</td><td>Rework incidents</td></tr>
+        <tr><td class="num">9</td><td>Complete work</td><td>Finish the scoped task</td><td>Job Details</td><td>—</td><td>—</td><td>—</td><td>Scope ambiguity mid-task</td><td>Request Info action always available</td><td>On-time completion rate</td></tr>
+        <tr><td class="num">10</td><td>Upload photos</td><td>Prove the work is done</td><td>Photo Upload</td><td>Tap camera, capture</td><td>2</td><td>Photo(s), optional caption</td><td>No photo taken</td><td>Photo required to mark complete</td><td>% tasks with photo evidence</td></tr>
+        <tr><td class="num">11</td><td>Mark complete</td><td>Close out and trigger the next step</td><td>Job Details</td><td>Tap mark complete</td><td>1</td><td>Timestamp</td><td>Marked complete without being done</td><td>Homeowner visibility creates accountability</td><td>Reopened-after-complete rate</td></tr>
+        <tr><td class="num">12</td><td>Report delay/issue</td><td>Explain a problem fast</td><td>Delay Report</td><td>Select reason, optional note/photo</td><td>2-3</td><td>Reason, photo (optional)</td><td>Delay unreported until too late</td><td>Delay reporting is faster than making a phone call</td><td>Delay-report usage rate</td></tr>
+        <tr><td class="num">13</td><td>Next trade &amp; contractor notified</td><td>Hand off cleanly</td><td>(automatic)</td><td>None</td><td>0</td><td>—</td><td>Notified too early (dependency not truly clear)</td><td>Hard gate: notify only when dependency actually closes</td><td>Next-trade dispatch delay after handoff</td></tr>
+        <tr><td class="num">14</td><td>Invoice/payment status updated</td><td>Know when to expect payment</td><td>Payments</td><td>Submit invoice (if supported)</td><td>2-3</td><td>Invoice amount, task reference</td><td>Status unclear or stale</td><td>Status always shows current state, not last-known</td><td>Days-to-payment</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s5">
+      <div class="eyebrow">05 · Website Structure</div>
+      <h2>The marketing site sells one mechanic, three ways</h2>
+
+      <h3>Main navigation</h3>
+      <p>Home · For Contractors · For Trades · For Homeowners · Features · Pricing · Demo · Login</p>
+
+      <h3>Homepage sections</h3>
+      <div class="table-wrap"><table>
+        <tr><th>#</th><th>Section</th><th>Goal</th><th>Headline</th><th>Visual idea</th><th>CTA</th></tr>
+        <tr><td class="num">1</td><td>Hero</td><td>State the mechanic in one line</td><td>"Stop chasing trades. Stop guessing what happens next."</td><td>Split screen: homeowner phone update vs. trade readiness banner</td><td>Book a demo</td></tr>
+        <tr><td class="num">2</td><td>Problem statement</td><td>Name the pain before the pitch</td><td>"Most delays aren't caused by bad work. They're caused by nobody knowing what's actually ready."</td><td>Three pain icons: homeowner, contractor, trade</td><td>Scroll cue</td></tr>
+        <tr><td class="num">3</td><td>How it works</td><td>Explain the mechanic simply</td><td>"One readiness check, before every dispatch."</td><td>3-step diagram: Confirm → Check Readiness → Notify</td><td>See how it works</td></tr>
+        <tr><td class="num">4</td><td>Benefits by user type</td><td>Let each visitor self-identify</td><td>"Built for homeowners, contractors, and trades — differently."</td><td>Three-tab switcher</td><td>Tab-specific CTA</td></tr>
+        <tr><td class="num">5</td><td>Trade readiness checklist</td><td>Showcase the differentiator</td><td>"Know if you're actually ready to go."</td><td>Live-looking checklist with Ready/Not Ready states</td><td>See the checklist</td></tr>
+        <tr><td class="num">6</td><td>Automatic homeowner updates</td><td>Prove homeowners stay informed</td><td>"Your homeowner already knows."</td><td>Phone mockup of an update message</td><td>See a sample update</td></tr>
+        <tr><td class="num">7</td><td>Progress proof / daily reports</td><td>Show the record that prevents disputes</td><td>"Every day, documented."</td><td>Daily report mockup with photos</td><td>See a sample report</td></tr>
+        <tr><td class="num">8</td><td>Change order approvals</td><td>Address the surprise-cost fear</td><td>"No surprise costs. Ever."</td><td>Before/after cost comparison card</td><td>See how approvals work</td></tr>
+        <tr><td class="num">9</td><td>Dashboard preview</td><td>Show contractor command center</td><td>"Today, tomorrow, and what's at risk — one screen."</td><td>Dashboard screenshot</td><td>Explore the dashboard</td></tr>
+        <tr><td class="num">10</td><td>Mobile trade app preview</td><td>Reassure trade adoption is easy</td><td>"Five taps. That's the whole app."</td><td>Phone mockup of job detail screen</td><td>See the trade app</td></tr>
+        <tr><td class="num">11</td><td>Integrations</td><td>Signal ecosystem seriousness (later phase)</td><td>"Works with the tools you already use."</td><td>Logo row (QuickBooks, calendar, SMS)</td><td>See integrations</td></tr>
+        <tr><td class="num">12</td><td>Pricing preview</td><td>Set expectations, reduce friction to next step</td><td>"Simple plans that scale with your projects."</td><td>3-tier card row</td><td>See pricing</td></tr>
+        <tr><td class="num">13</td><td>Final CTA</td><td>Convert</td><td>"See it running on a real project."</td><td>Simple centered CTA band</td><td>Book a demo</td></tr>
+      </table></div>
+
+      <h3>Key website pages</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Page</th><th>Purpose</th><th>Main message</th><th>Sections</th><th>CTAs</th><th>Trust elements</th><th>Conversion goal</th></tr>
+        <tr><td>Homepage</td><td>Establish the category and mechanic</td><td>Coordination + communication + readiness + proof</td><td>All 13 above</td><td>Book a demo</td><td>Customer logos, a real screenshot, not mockup art</td><td>Demo booked</td></tr>
+        <tr><td>For Contractors</td><td>Speak directly to the buyer</td><td>Stop chasing trades, reduce disputes</td><td>Pain points, dashboard tour, ROI framing</td><td>Book a demo</td><td>Case study quote</td><td>Demo booked</td></tr>
+        <tr><td>For Trades</td><td>Reassure trades this isn't "more software"</td><td>Know if you're ready, five-tap workflow</td><td>Readiness checklist, mobile screens, SMS-first note</td><td>"Tell your GC about Constrivo"</td><td>"No install required to start" note</td><td>Trade opt-in rate</td></tr>
+        <tr><td>For Homeowners</td><td>Build trust before the contractor even shares the link</td><td>Always know what's happening</td><td>Portal tour, sample update, sample daily report</td><td>"Ask your contractor about Constrivo"</td><td>Plain-language sample messages</td><td>Referral-driven contractor leads</td></tr>
+        <tr><td>Features</td><td>Full feature index for evaluators</td><td>Every function in one scannable list</td><td>Grouped by Section 11's function list</td><td>Book a demo</td><td>Feature-to-pain-point mapping</td><td>Time-on-page, demo booked</td></tr>
+        <tr><td>Trade Readiness Checklist page</td><td>Deep-dive the differentiator</td><td>What gets checked, and why it matters</td><td>Checklist items, statuses, before/after story</td><td>Book a demo</td><td>A real "wasted trip" cost stat</td><td>Demo booked</td></tr>
+        <tr><td>Automatic Updates page</td><td>Deep-dive homeowner communication</td><td>Message types, channels, review-before-send</td><td>Sample messages, channel list</td><td>Book a demo</td><td>Sample messages in plain language</td><td>Demo booked</td></tr>
+        <tr><td>Change Orders page</td><td>Deep-dive the dispute-prevention story</td><td>No hidden costs, ever</td><td>Workflow steps, audit trail explanation</td><td>Book a demo</td><td>Before/after cost example</td><td>Demo booked</td></tr>
+        <tr><td>Pricing</td><td>Remove pricing as a blocker</td><td>Simple, project-scaled plans</td><td>4-tier table, add-ons, FAQ</td><td>Start a pilot</td><td>"No long-term contract for pilots" note</td><td>Pilot signups</td></tr>
+        <tr><td>Demo / Book a Demo</td><td>Convert to a real conversation</td><td>See it running on a real project type</td><td>Short form, calendar picker</td><td>Book</td><td>Response-time expectation set</td><td>Demo shows scheduled</td></tr>
+        <tr><td>Login/Signup</td><td>Get existing users in fast</td><td>—</td><td>Login form, "forgot password," role-aware redirect</td><td>Log in</td><td>—</td><td>Login success rate</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s6">
+      <div class="eyebrow">06 · Web App Structure</div>
+      <h2>The contractor's operating surface</h2>
+
+      <h3>Main app navigation</h3>
+      <p>Dashboard · Projects · Schedule · Trades · Readiness · Updates · Change Orders · Photos/Reports · Homeowners/Clients · Documents · Settings</p>
+
+      <h3>Contractor dashboard widgets</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Widget</th><th>What it answers</th></tr>
+        <tr><td>Today's work</td><td>What's happening right now, across every project</td></tr>
+        <tr><td>Tomorrow's work</td><td>What needs to be confirmed/ready by tonight</td></tr>
+        <tr><td>Late tasks</td><td>What's already behind and needs attention</td></tr>
+        <tr><td>Trades waiting to confirm</td><td>Where a no-response could become a no-show</td></tr>
+        <tr><td>Site readiness issues</td><td>What's blocking a dispatch right now</td></tr>
+        <tr><td>Material delays</td><td>What deliveries are at risk of slipping a task</td></tr>
+        <tr><td>Inspection blockers</td><td>What's waiting on a municipal gate</td></tr>
+        <tr><td>Homeowner decisions needed</td><td>Where the project is stalled on the client</td></tr>
+        <tr><td>Change orders pending</td><td>What's waiting on approval before work can proceed</td></tr>
+        <tr><td>Photos uploaded today</td><td>Field activity, at a glance</td></tr>
+        <tr><td>Daily reports sent</td><td>Communication coverage across active projects</td></tr>
+        <tr><td>At-risk projects</td><td>Which projects need the contractor's attention today, ranked</td></tr>
+      </table></div>
+
+      <h3>Project workspace tabs</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Tab</th><th>Purpose</th><th>Key info</th><th>Main actions</th><th>Empty state</th><th>UX risk</th><th>Safeguard</th></tr>
+        <tr><td>Overview</td><td>One-glance project health</td><td>Status, % complete, next milestone</td><td>Jump to any tab</td><td>"Add your first task to get started"</td><td>Overload with too many stats</td><td>Show 4-5 numbers max, detail lives in tabs</td></tr>
+        <tr><td>Timeline</td><td>Sequenced plan</td><td>Phases, tasks, dependencies</td><td>Add/reorder tasks</td><td>Empty timeline prompt</td><td>Overwhelming Gantt-style view</td><td>Homeowner-friendly view toggle (§11-A)</td></tr>
+        <tr><td>Tasks</td><td>Granular task list</td><td>Status, assigned trade, dates</td><td>Edit, reassign, mark status</td><td>"No tasks yet"</td><td>Status drift from reality</td><td>Status changes require the assigned trade's action, not just contractor edit</td></tr>
+        <tr><td>Trades</td><td>Who's involved</td><td>Company, task, confirmation status</td><td>Invite, re-invite, message</td><td>"No trades invited yet"</td><td>Unclear who's actually confirmed vs. just invited</td><td>Status pill always visible (§12 vocabulary)</td></tr>
+        <tr><td>Readiness</td><td>What's blocking dispatch</td><td>Blocking items, owner, deadline</td><td>Resolve, notify owner, reschedule</td><td>"Nothing blocked right now"</td><td>Alert fatigue from minor items</td><td>Only surfaces items that actually block a near-term task</td></tr>
+        <tr><td>Documents</td><td>Drawings and specs</td><td>Files, version, linked tasks</td><td>Upload, replace, assign to task</td><td>"No documents yet" + warning if a task needs one</td><td>Trade working from stale version</td><td>Version history + "updated" alert (§11-I)</td></tr>
+        <tr><td>Photos</td><td>Visual record</td><td>Dated, tagged to task</td><td>Upload, tag, mark homeowner-visible</td><td>"No photos yet"</td><td>Unflattering photos shown to homeowner by accident</td><td>Explicit homeowner-visibility toggle per photo</td></tr>
+        <tr><td>Change Orders</td><td>Scope/cost changes</td><td>Status, cost/schedule impact</td><td>Create, send, track approval</td><td>"No change orders yet"</td><td>Ambiguous cost framing</td><td>Mandatory before/after fields (§14)</td></tr>
+        <tr><td>Daily Reports</td><td>Day-by-day record</td><td>Auto-generated summaries</td><td>Review, edit, send</td><td>"No activity recorded yet today"</td><td>Generic reports feel like spam</td><td>Only generated on days with real field activity</td></tr>
+        <tr><td>Homeowner View</td><td>See exactly what the client sees</td><td>Mirror of the homeowner portal</td><td>Preview, adjust visibility</td><td>N/A — mirrors homeowner state</td><td>Contractor forgets what's client-visible</td><td>Always-available "view as homeowner" toggle</td></tr>
+        <tr><td>Activity Log</td><td>Full audit trail</td><td>Actor, action, timestamp</td><td>Filter, export</td><td>"No activity yet"</td><td>Overwhelming raw log</td><td>Filterable by entity/actor/date</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s7">
+      <div class="eyebrow">07 · Mobile App Structure</div>
+      <h2>Built for a phone, in gloves, in the sun</h2>
+
+      <h3>Trade mobile navigation</h3>
+      <p>Today · Upcoming · Job Details · Documents · Photos · Check In/Out · Issues · Messages · Payments/Invoices (if supported)</p>
+
+      <h3>Field crew home screen</h3>
+      <p>Today's assigned job · start time · address · <span class="status status-ready"><i></i>site readiness status</span> · scope summary · Navigate button · Call superintendent button · Check-in button · Delay/report issue button.</p>
+
+      <h3>Mobile design requirements</h3>
+      <ul>
+        <li>Minimal typing — status, taps, and photos do almost all the work</li>
+        <li>Large buttons for gloved hands and quick glances</li>
+        <li>Fast load times — today's job is the first thing rendered</li>
+        <li>Offline tolerance — current job's data caches locally, actions queue and sync</li>
+        <li>Photo-first reporting for completion and issues</li>
+        <li>Tap-to-call, tap-to-navigate — no dialing, no address copy-paste</li>
+        <li>Clear status labels in plain language, using the Section 12 vocabulary consistently</li>
+        <li>SMS fallback for trades who won't install the app</li>
+        <li>No complex menus — one obvious next action per screen</li>
+      </ul>
+
+      <h3>Mobile screen map</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Screen</th><th>Primary content</th><th>Primary action</th></tr>
+        <tr><td>Job invite</td><td>Task, address, dates, scope summary</td><td>Accept / decline / propose date</td></tr>
+        <tr><td>Job details</td><td>Full scope, readiness status, contact, materials/inspection notes</td><td>Navigate / check in</td></tr>
+        <tr><td>Readiness checklist</td><td>Each blocking item with its status</td><td>Acknowledge / request info</td></tr>
+        <tr><td>Check-in</td><td>Timestamp confirmation</td><td>Confirm arrival</td></tr>
+        <tr><td>Completion report</td><td>Photo capture, notes</td><td>Mark complete</td></tr>
+        <tr><td>Photo upload</td><td>Camera-first capture flow</td><td>Attach to task</td></tr>
+        <tr><td>Delay report</td><td>Reason selector, optional note/photo</td><td>Submit delay</td></tr>
+        <tr><td>Scope/drawing view</td><td>Latest revision, zoom/pan, offline-cached</td><td>Confirm viewed (optional)</td></tr>
+        <tr><td>Message thread</td><td>Project-scoped messages with the contractor</td><td>Reply</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s8">
+      <div class="eyebrow">08 · Homeowner Portal Blueprint</div>
+      <h2>Answering "what's happening with my project?" without a phone call</h2>
+
+      <div class="table-wrap"><table>
+        <tr><th>Page</th><th>Purpose</th><th>Homeowner sees</th><th>Homeowner can do</th><th>Contractor controls</th><th>Notification trigger</th><th>Safeguard</th></tr>
+        <tr><td>Project Overview</td><td>One-glance status</td><td>Phase, % complete, next milestone</td><td>Navigate to any other page</td><td>What's summarized here</td><td>None (pull, not push)</td><td>Never blank — always a current state sentence</td></tr>
+        <tr><td>Timeline</td><td>See the whole plan</td><td>Phases in plain language, current position</td><td>Read only</td><td>Phase labels/copy</td><td>Timeline republished</td><td>No jargon, no internal task IDs</td></tr>
+        <tr><td>Today's Work</td><td>Know what's happening right now</td><td>Trade on site, task, expected duration</td><td>Read only</td><td>What's marked homeowner-visible</td><td>Crew arrival update</td><td>Never shows a blank day with no explanation</td></tr>
+        <tr><td>Upcoming Crews</td><td>Plan around visits</td><td>Trade, date, arrival window</td><td>Confirm access if requested</td><td>Which crews/dates are published</td><td>Upcoming crew notice</td><td>Real windows, not "sometime this week"</td></tr>
+        <tr><td>Progress Photos</td><td>See real progress</td><td>Dated photos per task</td><td>Read only</td><td>Which photos are homeowner-visible</td><td>New photos in daily report</td><td>Tagged to task/date, not a generic gallery</td></tr>
+        <tr><td>Delays and Explanations</td><td>Understand why, not just that</td><td>Reason, new target date</td><td>Read only</td><td>Delay reason phrasing (reviewable before send)</td><td>Delay notice</td><td>Never exposes internal blame between trades</td></tr>
+        <tr><td>Decisions Needed</td><td>Unblock the project</td><td>What's being asked, deadline, options</td><td>Respond/choose</td><td>What's queued and its deadline</td><td>Decision-needed alert</td><td>Enough lead time flagged, never last-minute by design</td></tr>
+        <tr><td>Change Orders</td><td>Approve scope/cost changes clearly</td><td>Reason, before/after cost, before/after schedule</td><td>Approve, reject, ask a question</td><td>Draft content before sending</td><td>Change order request</td><td>Cost/schedule impact mandatory, never hidden</td></tr>
+        <tr><td>Payment Milestones</td><td>Know what's owed and why</td><td>Milestone, amount, status</td><td>Pay/acknowledge if enabled</td><td>Milestone structure</td><td>Milestone reached</td><td>Tied to visible completed work, not arbitrary dates</td></tr>
+        <tr><td>Punch List / Warranty</td><td>Confirm true completion</td><td>Item, status, photo</td><td>Confirm resolved / flag issue</td><td>Item list and status</td><td>Item resolved notice</td><td>Stays trackable after project "closes"</td></tr>
+        <tr><td>Messages</td><td>Ask a question without a phone call</td><td>Project-scoped thread</td><td>Send/reply</td><td>Response time expectation</td><td>New message</td><td>Never a dead-end thread with no reply SLA</td></tr>
+        <tr><td>Documents</td><td>Reference contract/drawings</td><td>Contract, drawings, permits (as shared)</td><td>Download</td><td>What's shared with homeowner</td><td>New document shared</td><td>Clear "latest version" labeling</td></tr>
+      </table></div>
+
+      <h3>Homeowner trust requirements</h3>
+      <p>The portal must answer, at all times, without the homeowner having to ask: What is happening now? Who is coming next? When are they coming? Why is there a delay? What decision is needed from me? What cost changed and why? What work was completed today? What happens next?</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s9">
+      <div class="eyebrow">09 · Contractor Dashboard Blueprint</div>
+      <h2>The command center that replaces the phone</h2>
+
+      <div class="table-wrap"><table>
+        <tr><th>View</th><th>Purpose</th><th>Key widgets</th><th>Main actions</th><th>Filters</th><th>Alerts</th><th>Success metric</th></tr>
+        <tr><td>Portfolio Dashboard</td><td>Cross-project health</td><td>At-risk projects, today/tomorrow across all jobs</td><td>Jump into a project</td><td>By status, by PM</td><td>Multi-project risk summary</td><td>Time to spot an at-risk project</td></tr>
+        <tr><td>Project Dashboard</td><td>Single-project health</td><td>Overview stats, next milestone</td><td>Jump to any project tab</td><td>—</td><td>Project-level risk flags</td><td>Time-on-dashboard per day</td></tr>
+        <tr><td>Schedule View</td><td>Full sequenced plan</td><td>Timeline, dependencies</td><td>Reorder, reschedule</td><td>By trade, by phase</td><td>Sequencing conflicts</td><td>Manual reschedule frequency</td></tr>
+        <tr><td>Today/Tomorrow Board</td><td>Run the day</td><td>Confirmed jobs, unconfirmed jobs, late jobs</td><td>Chase confirmation, notify</td><td>By project, by trade</td><td>Unconfirmed job past deadline</td><td>% confirmed by end of prior day</td></tr>
+        <tr><td>Trade Confirmation Board</td><td>Know who's actually coming</td><td>Invited/accepted/declined counts</td><td>Re-invite, escalate</td><td>By status</td><td>No-response timeout</td><td>Confirmation rate</td></tr>
+        <tr><td>Readiness Issues Board</td><td>See every blocked dispatch</td><td>Blocking item, owner, deadline</td><td>Resolve, reschedule, notify</td><td>By blocker type</td><td>New blocker created</td><td>Wasted-trip rate</td></tr>
+        <tr><td>Change Order Board</td><td>Track approvals</td><td>Pending/approved/rejected</td><td>Follow up, resend</td><td>By project, by status</td><td>Approval past deadline</td><td>Time-to-approval</td></tr>
+        <tr><td>Homeowner Communication Board</td><td>Track client-facing coverage</td><td>Last update sent per project</td><td>Send manual update if needed</td><td>By last-contact date</td><td>Project with no update in N days</td><td>Homeowner-initiated call rate</td></tr>
+        <tr><td>Daily Reports Board</td><td>Confirm reports are actually going out</td><td>Sent/not-sent per active project</td><td>Review, send</td><td>By date</td><td>Report not sent on an active day</td><td>Report coverage rate</td></tr>
+        <tr><td>Photo/Proof Board</td><td>Confirm field documentation is happening</td><td>Photos uploaded per project per day</td><td>Review, tag homeowner-visible</td><td>By project, by task</td><td>Task marked complete with no photo</td><td>% tasks with photo evidence</td></tr>
+      </table></div>
+
+      <h3>Contractor critical alerts</h3>
+      <p>Trade has not confirmed · trade is late · trade checked in · trade did not check in · site is not ready · materials missing · previous task incomplete · inspection not passed · homeowner decision needed · change order pending · daily report not sent.</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s10">
+      <div class="eyebrow">10 · Trade Mobile App Blueprint</div>
+      <h2>Answering "am I actually ready to go?" before anyone drives anywhere</h2>
+
+      <h3>Trade job detail screen must show</h3>
+      <p>Project name · address · map/navigation · arrival window · scope of work · <span class="status status-ready"><i></i>readiness status</span> · previous-trade completion status · drawings/specs/photos · site access instructions · parking instructions · contact person · materials status · inspection status · Check-in button · Report Delay button · Mark Complete button.</p>
+
+      <h3>Trade actions</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Workflow</th><th>Min. taps</th><th>Required fields</th><th>Optional fields</th><th>Notification triggered</th><th>Contractor sees</th><th>Homeowner sees</th><th>Failure risk</th><th>Safeguard</th></tr>
+        <tr><td>Accept job</td><td>1</td><td>—</td><td>—</td><td>Contractor notified of acceptance</td><td>Status → confirmed</td><td>Crew scheduled</td><td>Accepts without real capacity</td><td>Crew confirmation step before final lock</td></tr>
+        <tr><td>Decline job</td><td>1-2</td><td>Decline reason (quick-select)</td><td>Note</td><td>Contractor notified, needs new trade</td><td>Status → needs trade</td><td>No change shown</td><td>Late decline with no time to re-invite</td><td>Decline reason feeds faster re-invite suggestion</td></tr>
+        <tr><td>Propose new date</td><td>2</td><td>Proposed date</td><td>Reason</td><td>Contractor approval request</td><td>Pending approval</td><td>No change until approved</td><td>Silent date drift</td><td>Contractor must explicitly approve before it's real</td></tr>
+        <tr><td>Confirm arrival</td><td>1</td><td>—</td><td>—</td><td>Homeowner arrival-window notice</td><td>Confirmed for today</td><td>Arrival update</td><td>Confirms then no-shows anyway</td><td>Check-in required within grace window or auto-flag</td></tr>
+        <tr><td>Check in</td><td>1</td><td>—</td><td>Site condition note</td><td>Contractor + homeowner "crew on site"</td><td>On-site status</td><td>"Crew is here" update</td><td>Forgotten check-in</td><td>Reminder nudge post-scheduled-start</td></tr>
+        <tr><td>Check out</td><td>1</td><td>—</td><td>Notes</td><td>None required</td><td>Time on site logged</td><td>None</td><td>—</td><td>—</td></tr>
+        <tr><td>Upload photos</td><td>2</td><td>Photo</td><td>Caption</td><td>None (batched into daily report)</td><td>Photo in project record</td><td>If tagged visible</td><td>No photo taken</td><td>Required for Mark Complete</td></tr>
+        <tr><td>Mark complete</td><td>1</td><td>Photo (if none yet)</td><td>Note</td><td>Next trade / contractor "clear to start"</td><td>Task → complete</td><td>Milestone update</td><td>Marked complete without being done</td><td>Homeowner visibility creates accountability</td></tr>
+        <tr><td>Report delay</td><td>2-3</td><td>Reason</td><td>Note, photo</td><td>Contractor + homeowner delay notice</td><td>Task → delayed</td><td>Non-technical delay explanation</td><td>Delay hidden until too late</td><td>Faster than a phone call, so it actually gets used</td></tr>
+        <tr><td>Report missing materials</td><td>2</td><td>Material, quantity short</td><td>Photo</td><td>Contractor materials alert</td><td>Readiness → blocked</td><td>"Materials are being sourced" (non-technical)</td><td>Discovered on arrival, wasted trip</td><td>Should be caught by readiness check pre-dispatch</td></tr>
+        <tr><td>Report site not ready</td><td>2</td><td>Reason (quick-select)</td><td>Photo, note</td><td>Contractor readiness alert</td><td>Readiness → not ready</td><td>Non-blaming status only</td><td>Wasted trip already happened</td><td>Feeds back into pre-dispatch checklist accuracy</td></tr>
+        <tr><td>Request information</td><td>2</td><td>Question</td><td>Photo reference</td><td>Contractor info request</td><td>Open question flagged</td><td>None</td><td>Work paused on ambiguity</td><td>Always-available action, no separate app needed</td></tr>
+        <tr><td>Request inspection</td><td>2</td><td>Inspection type</td><td>Required documents</td><td>Contractor + inspector notice</td><td>Readiness → waiting on inspection</td><td>"Waiting on inspection" (non-technical)</td><td>Missing required docs delays the visit</td><td>Checklist validation before submission</td></tr>
+        <tr><td>Submit invoice</td><td>3</td><td>Amount, task reference</td><td>Attachment</td><td>Contractor invoice notice</td><td>Invoice → submitted</td><td>None (contractor-facing only)</td><td>Status goes stale</td><td>Status always reflects current state, not last-known</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s11">
+      <div class="eyebrow">11 · Core Feature Blueprint</div>
+      <h2>Ten functions, four of them big enough to get their own section</h2>
+
+      <div class="table-wrap"><table>
+        <tr><th>Fn</th><th>Function</th><th>Main user</th><th>MVP</th><th>Detail</th></tr>
+        <tr><td class="mono">A</td><td>Project Timeline</td><td>Contractor, Homeowner, Trade</td><td><span class="tag tag-mvp">MVP</span></td><td>Below</td></tr>
+        <tr><td class="mono">B</td><td>Trade Readiness Checklist</td><td>Contractor, Trade</td><td><span class="tag tag-mvp">MVP</span></td><td><a href="#s12">Section 12</a></td></tr>
+        <tr><td class="mono">C</td><td>Automatic Homeowner Updates</td><td>Homeowner</td><td><span class="tag tag-mvp">MVP</span></td><td><a href="#s13">Section 13</a></td></tr>
+        <tr><td class="mono">D</td><td>Trade Confirmation</td><td>Contractor, Trade</td><td><span class="tag tag-mvp">MVP</span></td><td>Below</td></tr>
+        <tr><td class="mono">E</td><td>Photo Proof</td><td>Trade, Contractor, Homeowner</td><td><span class="tag tag-mvp">MVP</span></td><td>Below</td></tr>
+        <tr><td class="mono">F</td><td>Change Order Approval</td><td>Contractor, Homeowner</td><td><span class="tag tag-mvp">MVP</span></td><td><a href="#s14">Section 14</a></td></tr>
+        <tr><td class="mono">G</td><td>Daily Report</td><td>Contractor, Homeowner</td><td><span class="tag tag-mvp">MVP</span></td><td><a href="#s15">Section 15</a></td></tr>
+        <tr><td class="mono">H</td><td>Delay and Issue Reporting</td><td>Trade, Contractor, Homeowner</td><td><span class="tag tag-mvp">MVP</span></td><td>Below</td></tr>
+        <tr><td class="mono">I</td><td>Documents and Drawings</td><td>Contractor, Trade</td><td><span class="tag tag-v1">V1</span></td><td>Below</td></tr>
+        <tr><td class="mono">J</td><td>Payment or Invoice Status</td><td>Trade, Contractor, Homeowner</td><td><span class="tag tag-v2">V2</span></td><td>Below</td></tr>
+      </table></div>
+
+      <h3>A. Project Timeline</h3>
+      <p><strong>Purpose:</strong> one sequenced plan, rendered differently per audience. <strong>Problem solved:</strong> today the plan lives in the contractor's head; nobody else has a reliable view of it.</p>
+      <p><strong>Workflow:</strong> contractor lays out phases → tasks get sequenced with dependencies and trade assignments → start/end dates set → delays recalculate downstream automatically.</p>
+      <p><strong>Views:</strong> homeowner-friendly (plain-language phases, no internal task IDs), contractor detailed (full dependency graph, all trades), trade task view (only their own tasks and what's immediately before/after them).<br>
+      <strong>Edge case:</strong> a delay on one task must recalculate downstream dates without silently changing a trade's already-confirmed date — confirmed assignments require explicit contractor review before shifting.<br>
+      <strong>Success metric:</strong> % of projects where the homeowner never has to ask "what's the plan."</p>
+
+      <h3>D. Trade Confirmation</h3>
+      <p><strong>Purpose:</strong> replace "call the sub and hope" with a trackable, binding state. <strong>Problem solved:</strong> verbal commitments aren't confirmed, logged, or backed by a fallback plan.</p>
+      <p><strong>Workflow:</strong> job invite sent with scope/address/dates → trade accepts, declines, or proposes a new date → reminder sent before work → no-response triggers escalation to a backup trade or a contractor alert → contractor dashboard reflects real-time status.</p>
+      <p><strong>Edge case:</strong> a trade accepts but doesn't actually have crew capacity — mitigated by a lightweight capacity confirmation step, not assumed from acceptance alone.<br>
+      <strong>Success metric:</strong> % of confirmed jobs that result in an actual on-time arrival.</p>
+
+      <h3>E. Photo Proof</h3>
+      <p><strong>Purpose:</strong> a visual, timestamped record that replaces "trust me, it's done." <strong>Problem solved:</strong> disputes over whether work was completed, or completed correctly, have no evidence to resolve them today.</p>
+      <p><strong>Workflow:</strong> before/during/completion/issue photos, each tagged to a specific task → stored permanently in the project record → visible to the homeowner only if the contractor marks it visible (protects against showing an unflattering in-progress mess out of context).</p>
+      <p><strong>Edge case:</strong> a trade uploads a photo of the wrong task — mitigated by requiring photo upload from within the specific task's screen, never a generic upload.<br>
+      <strong>Success metric:</strong> % of completed tasks with photo evidence attached.</p>
+
+      <h3>H. Delay and Issue Reporting</h3>
+      <p><strong>Purpose:</strong> make reporting a problem faster than making a phone call, so it actually gets used. <strong>Problem solved:</strong> delays get discovered by the homeowner or the next trade, not reported proactively.</p>
+      <div class="table-wrap"><table>
+        <tr><th>Reason type</th><th>Who reports</th><th>Who's notified</th><th>Homeowner-facing language</th></tr>
+        <tr><td>Weather</td><td>Trade</td><td>Contractor, homeowner</td><td>"Weather pushed this task back — new target below."</td></tr>
+        <tr><td>Missing materials</td><td>Trade</td><td>Contractor</td><td>"Materials are being sourced — we'll update the timeline once confirmed."</td></tr>
+        <tr><td>Site not ready</td><td>Trade</td><td>Contractor</td><td>"A prior step needs to finish before this can start."</td></tr>
+        <tr><td>Previous trade incomplete</td><td>Trade, System</td><td>Contractor, next trade</td><td>Same as above — never names the specific trade at fault</td></tr>
+        <tr><td>Access issue</td><td>Trade</td><td>Contractor, homeowner</td><td>"The crew couldn't access the site as planned — we're coordinating a new time."</td></tr>
+        <tr><td>Customer decision needed</td><td>Contractor, System</td><td>Homeowner</td><td>Routed to Decisions Needed, not framed as a delay at all</td></tr>
+        <tr><td>Inspection issue</td><td>Contractor, System</td><td>Contractor, homeowner</td><td>"Waiting on inspection before the next step can start."</td></tr>
+      </table></div>
+      <p><strong>Safeguard:</strong> a new target date is always attached before a delay notice reaches the homeowner — "delayed" alone with no next step is the single worst-received message type.<br>
+      <strong>Success metric:</strong> delay-reporting usage rate among active trades; homeowner complaint rate tied to delays.</p>
+
+      <h3>I. Documents and Drawings</h3>
+      <p><strong>Purpose:</strong> make "which version is current" a solved problem. <strong>Workflow:</strong> upload drawings/specs → assign to specific tasks → version history retained → trades always see the latest revision, with an explicit "updated" alert if a revision lands mid-task → mobile view works offline once cached.<br>
+      <strong>Permissions:</strong> trades see only documents relevant to their assigned tasks; homeowners see contract-level documents only, not internal specs.<br>
+      <strong>Edge case:</strong> a task has no drawing linked at all — this should hard-warn the contractor before the task can be marked ready, not fail silently.<br>
+      <strong>Success metric:</strong> rework incidents traced to an outdated document (target: trend to zero).</p>
+
+      <h3>J. Payment or Invoice Status</h3>
+      <p><strong>Purpose:</strong> shared visibility into payment state without turning the platform into an accounting system. <strong>Workflow:</strong> payment milestones defined per project (contractor-facing) → homeowner sees milestone/amount/status tied to visible completed work → trade submits an invoice against a task, status moves submitted → approved → paid.<br>
+      <strong>Visibility split:</strong> homeowners see payment milestones tied to their contract, never a trade's invoice amount; trades see their own invoice status only, never the homeowner's payment terms; contractor sees everything.<br>
+      <strong>Edge case:</strong> this is explicitly not a full accounting/payment-processing system in MVP — status tracking only, no payment processing (see Section 17).<br>
+      <strong>Success metric:</strong> days-to-payment for trades; reduction in "when do I get paid" calls.</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s12">
+      <div class="eyebrow">12 · Trade Readiness Checklist System</div>
+      <h2>The platform's actual differentiator</h2>
+      <p class="lede">Before a trade is dispatched, the system checks whether the job is real — not just whether a date is on the calendar. This is the one mechanic a plain scheduling tool structurally cannot offer.</p>
+
+      <h3>Readiness logic — what gets verified</h3>
+      <ul>
+        <li>Previous trade marked complete</li>
+        <li>Required photos uploaded</li>
+        <li>Materials delivered</li>
+        <li>Required inspection passed</li>
+        <li>Drawings/specs available</li>
+        <li>Site access confirmed</li>
+        <li>Parking/access instructions available</li>
+        <li>Homeowner notified</li>
+        <li>Weather acceptable</li>
+        <li>Required decision/change order approved</li>
+      </ul>
+
+      <h3>Readiness statuses</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Status</th><th>Meaning</th><th>Trade sees</th><th>Contractor sees</th></tr>
+        <tr><td><span class="status status-ready"><i></i>Ready</span></td><td>Every checklist item clears</td><td>Green light to dispatch</td><td>No action needed</td></tr>
+        <tr><td><span class="status status-atrisk"><i></i>At Risk</span></td><td>Not blocked yet, but a dependency is close to slipping</td><td>Proceed, but a heads-up is shown</td><td>Flagged for proactive attention</td></tr>
+        <tr><td><span class="status status-notready"><i></i>Not Ready</span></td><td>At least one hard blocker is open</td><td>Hard warning before dispatch</td><td>Blocking item, owner, and deadline shown</td></tr>
+        <tr><td><span class="status status-waiting"><i></i>Waiting on Confirmation</span></td><td>Depends on an external party's response (trade acceptance, homeowner decision)</td><td>N/A or "we're waiting on X"</td><td>Who it's waiting on and since when</td></tr>
+        <tr><td><span class="status status-manual"><i></i>Manual Review Needed</span></td><td>The system can't determine readiness automatically (e.g., conflicting reports)</td><td>"Contractor is confirming — hold for now"</td><td>Flagged for a human decision</td></tr>
+      </table></div>
+
+      <h3>Readiness output per task</h3>
+      <p>Readiness score/status · blocking items · recommended action · who owns the blocker · deadline · downstream impact (what else slips if this doesn't clear).</p>
+
+      <div class="grid-3">
+        <div class="card">
+          <h4>Contractor view</h4>
+          <p>All not-ready tasks, reason, owner, downstream impact, a suggested fix, and one-tap Notify or Reschedule actions.</p>
+        </div>
+        <div class="card">
+          <h4>Trade view</h4>
+          <p>A simple "ready to go" or "not ready" signal, the one missing item if blocked, who to contact, and the suggested next action — never the full internal checklist.</p>
+        </div>
+        <div class="card">
+          <h4>Homeowner view</h4>
+          <p>Simplified, non-technical status only — "Your project is waiting on inspection," "Materials are scheduled for delivery," "Your contractor will update the schedule once this step is complete." Never internal blame or trade-to-trade conflict.</p>
+        </div>
+      </div>
+
+      <div class="callout"><div class="cap">Non-negotiable safeguard</div>Never let a trade dispatch on a task marked Not Ready without an explicit contractor override — and log that override. The whole value of this feature collapses the first time a wasted trip happens despite a red status.</div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s13">
+      <div class="eyebrow">13 · Automatic Communication System</div>
+      <h2>The mechanism that actually replaces the phone call</h2>
+
+      <h3>Communication principles</h3>
+      <p>Clear · short · honest · role-specific · not too frequent · action-oriented · linked to the project timeline · editable by the contractor before sending when sensitive.</p>
+
+      <h3>Notification types</h3>
+      <p>Upcoming crew visit · arrival window · trade confirmed · trade delayed · task completed · inspection scheduled · inspection passed · inspection failed · materials delayed · change order requested · decision needed · daily report · project milestone completed.</p>
+
+      <h3>Notification channels</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Channel</th><th>Used for</th></tr>
+        <tr><td>In-app</td><td>Full detail, always the source of truth</td></tr>
+        <tr><td>Email</td><td>Daily reports, change orders, anything with attachments</td></tr>
+        <tr><td>SMS</td><td>Time-sensitive alerts (arrival window, delay) — the primary trade channel</td></tr>
+        <tr><td>Push notification</td><td>App-installed users, same content as SMS</td></tr>
+        <tr><td>Contractor review before sending</td><td>Required for delay explanations and change orders — anything where tone or figures matter</td></tr>
+      </table></div>
+
+      <h3>Sample message templates</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Type</th><th>Template</th></tr>
+        <tr><td>Homeowner — upcoming crew</td><td>"Your [trade] crew is scheduled for [day] between [time window]. Planned work: [scope]."</td></tr>
+        <tr><td>Homeowner — delay</td><td>"Your project timeline changed because [reason]. The new target for [task] is [date]. We'll update you if anything else changes."</td></tr>
+        <tr><td>Trade — readiness warning</td><td>"[Project/task] is not ready yet. Blocking item: [reason]. Please wait for confirmation before dispatching your crew."</td></tr>
+        <tr><td>Trade — job ready</td><td>"[Project/task] is ready. Address: [address]. Arrival window: [time]. Scope: [scope]."</td></tr>
+        <tr><td>Contractor — at-risk alert</td><td>"[Task] is at risk because [blocker]. Affected next task: [next task]. Recommended action: [action]."</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s14">
+      <div class="eyebrow">14 · Change Order &amp; Approval Workflow</div>
+      <h2>No hidden costs, ever</h2>
+
+      <h3>Steps</h3>
+      <ol>
+        <li>Contractor creates change order</li>
+        <li>Adds reason</li>
+        <li>Adds scope change</li>
+        <li>Adds cost impact</li>
+        <li>Adds schedule impact</li>
+        <li>Adds photos/documents</li>
+        <li>Sends to homeowner</li>
+        <li>Homeowner reviews</li>
+        <li>Homeowner approves, rejects, or asks a question</li>
+        <li>Contractor receives response</li>
+        <li>Approved change updates the project record</li>
+        <li>Schedule/budget impact is logged</li>
+      </ol>
+
+      <h3>Required fields</h3>
+      <p>Title · description · reason · cost impact · schedule impact · approval deadline · attachments · terms · status · approval timestamp.</p>
+
+      <h3>UX safeguards</h3>
+      <ul>
+        <li>No hidden cost changes — before/after amount always shown side by side</li>
+        <li>Approval required before work proceeds, when the contractor flags it as required</li>
+        <li>Homeowner-friendly explanation, not contract legalese, alongside the formal record</li>
+        <li>Clear before/after timeline, same treatment as cost</li>
+        <li>Full audit trail — who requested, who approved, when</li>
+        <li>Downloadable record for both parties</li>
+      </ul>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s15">
+      <div class="eyebrow">15 · Progress Proof &amp; Daily Reports</div>
+      <h2>The record that prevents disputes from having room to grow</h2>
+
+      <h3>Progress proof captures</h3>
+      <p>Check-in time · check-out time · crew/company · task completed · before photos · after photos · notes · issues · materials used (if relevant) · weather note (if relevant).</p>
+
+      <h3>Daily report auto-generates</h3>
+      <p>What happened today · who was on site · photos · completed tasks · delays/issues · decisions needed · what happens next · upcoming crew visits.</p>
+
+      <h3>Visibility rules</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Role</th><th>Sees</th></tr>
+        <tr><td>Contractor</td><td>Everything — full internal detail, all photos, all notes</td></tr>
+        <tr><td>Homeowner</td><td>Contractor-approved subset: completed tasks, homeowner-visible photos, plain-language delay/issue summaries, decisions needed, what's next</td></tr>
+        <tr><td>Trade</td><td>Only their own check-in/out, task, and photo records</td></tr>
+        <tr><td>Admin</td><td>Full record, for support/troubleshooting only, logged when accessed</td></tr>
+      </table></div>
+      <p><strong>Requires contractor approval before homeowner sees it:</strong> any note or photo not explicitly marked homeowner-visible, and any delay explanation that names blame between trades (reworded to a neutral status first).</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s16">
+      <div class="eyebrow">16 · Data Model &amp; Architecture</div>
+      <h2>The record every role reads from</h2>
+
+      <div class="table-wrap"><table>
+        <tr><th>Entity</th><th>Purpose</th><th>Key fields</th><th>Relationships / permissions</th></tr>
+        <tr><td>Organization</td><td>The contractor's account boundary</td><td>Name, plan tier</td><td>Has many Users, Projects</td></tr>
+        <tr><td>User</td><td>Any person on the platform</td><td>Name, contact, role(s)</td><td>Belongs to Organization; has Role(s)</td></tr>
+        <tr><td>Role</td><td>Permission set</td><td>Name, permission flags</td><td>Assigned per Project or org-wide</td></tr>
+        <tr><td>Project</td><td>The unifying record for one job</td><td>Address, type, status</td><td>Has Timeline, Tasks, Homeowner, Documents</td></tr>
+        <tr><td>Homeowner</td><td>The client the project is for</td><td>Contact info, comms preference</td><td>Belongs to one or more Projects; sees only their own</td></tr>
+        <tr><td>Contractor</td><td>The org managing the project</td><td>Business info</td><td>Owns Projects</td></tr>
+        <tr><td>Trade Company</td><td>A subcontractor business</td><td>Trade type, service area, contact</td><td>Has Crews; receives Assignments</td></tr>
+        <tr><td>Crew</td><td>A team dispatched by a Trade Company</td><td>Size, capacity</td><td>Belongs to Trade Company; has Crew Members</td></tr>
+        <tr><td>Crew Member</td><td>An individual field worker</td><td>Name, contact</td><td>Belongs to Crew; performs Check-Ins</td></tr>
+        <tr><td>Job Site</td><td>Physical location and access details</td><td>Address, access notes, parking</td><td>Belongs to Project</td></tr>
+        <tr><td>Timeline</td><td>The sequenced plan for a Project</td><td>Phases, current position</td><td>Has many Tasks</td></tr>
+        <tr><td>Task</td><td>A unit of scheduled work</td><td>Type, dates, status</td><td>Belongs to Timeline; has Assignment, Readiness Checklist, Photos</td></tr>
+        <tr><td>Dependency</td><td>Predecessor/successor relationship</td><td>Type (hard/soft)</td><td>Links two Tasks</td></tr>
+        <tr><td>Readiness Checklist</td><td>The set of conditions gating a Task's dispatch</td><td>Overall status</td><td>Belongs to Task; has many Readiness Items</td></tr>
+        <tr><td>Readiness Item</td><td>One checkable condition</td><td>Type, status, owner, deadline</td><td>Belongs to Readiness Checklist</td></tr>
+        <tr><td>Schedule Event</td><td>A calendar-visible occurrence</td><td>Date, time window</td><td>Belongs to Task</td></tr>
+        <tr><td>Assignment</td><td>A Trade-to-Task binding</td><td>Status (invited/accepted/declined)</td><td>Links Task and Trade Company</td></tr>
+        <tr><td>Confirmation</td><td>The binding accept/decline record</td><td>Response, timestamp</td><td>Belongs to Assignment</td></tr>
+        <tr><td>Check-In</td><td>Arrival record</td><td>Timestamp, geolocation (optional)</td><td>Belongs to Task/Crew Member</td></tr>
+        <tr><td>Check-Out</td><td>Departure record</td><td>Timestamp, notes</td><td>Belongs to Task/Crew Member</td></tr>
+        <tr><td>Photo</td><td>Field-captured image</td><td>Timestamp, tag (before/during/after/issue), homeowner-visible flag</td><td>Belongs to Task</td></tr>
+        <tr><td>Document</td><td>Any file (contract, permit, spec)</td><td>Type, version, visibility</td><td>Belongs to Project/Task</td></tr>
+        <tr><td>Drawing</td><td>A construction drawing specifically</td><td>Revision number</td><td>Subtype of Document; linked to Tasks</td></tr>
+        <tr><td>Material</td><td>An item required for a Task</td><td>Name, quantity</td><td>Belongs to Task</td></tr>
+        <tr><td>Delivery</td><td>An actual delivery event</td><td>Status, date, proof photo</td><td>Belongs to Material</td></tr>
+        <tr><td>Inspection</td><td>A scheduled or completed inspection</td><td>Type, status, result</td><td>Belongs to Task; gates downstream Tasks</td></tr>
+        <tr><td>Change Order</td><td>A scope/cost/schedule change record</td><td>Reason, cost/schedule impact, status</td><td>Belongs to Project; requires Approval</td></tr>
+        <tr><td>Approval</td><td>A homeowner's response to a Change Order</td><td>Decision, timestamp</td><td>Belongs to Change Order</td></tr>
+        <tr><td>Daily Report</td><td>Auto-compiled daily summary</td><td>Date, content snapshot</td><td>Belongs to Project</td></tr>
+        <tr><td>Notification</td><td>A sent alert record</td><td>Channel, recipient, event type, status</td><td>References the triggering entity</td></tr>
+        <tr><td>Message</td><td>A freeform thread entry</td><td>Author, timestamp, text</td><td>Belongs to Project</td></tr>
+        <tr><td>Delay Event</td><td>A reported delay and its reason</td><td>Reason, reported by, new target date</td><td>Belongs to Task; triggers recalculation</td></tr>
+        <tr><td>Payment Milestone</td><td>A homeowner-facing payment checkpoint</td><td>Amount, status, tied task</td><td>Belongs to Project</td></tr>
+        <tr><td>Invoice</td><td>A trade's bill against a Task</td><td>Amount, status</td><td>Belongs to Task/Trade Company</td></tr>
+        <tr><td>Activity Log</td><td>Human-readable event feed per project</td><td>Actor, action, timestamp</td><td>References any entity</td></tr>
+        <tr><td>Audit Log</td><td>Immutable who/what/when record</td><td>Actor, action, before/after</td><td>References any entity</td></tr>
+      </table></div>
+
+      <h3>Architecture notes</h3>
+      <div class="grid-2">
+        <div class="card"><h4>Notification architecture</h4><p>A single notification service owns channel selection (SMS/email/push/in-app), sensitive-message review gating, and delivery retries — not duplicated per feature.</p></div>
+        <div class="card"><h4>Audit trail</h4><p>Every readiness override, change-order approval, and status change writes an Audit Log row — this is what makes a dispute answerable months later.</p></div>
+        <div class="card"><h4>Role-based access</h4><p>Enforced at the API layer, not just hidden in the UI — a homeowner request can never resolve another homeowner's project data.</p></div>
+        <div class="card"><h4>Mobile offline strategy</h4><p>Current-task data (drawing, address, scope, readiness status) caches locally; check-in/out, photos, and reports queue locally and sync on reconnect.</p></div>
+        <div class="card"><h4>Photo &amp; document storage</h4><p>Object storage with per-photo visibility flags enforced server-side, not client-side — a homeowner-hidden photo must never be reachable via a guessed URL.</p></div>
+        <div class="card"><h4>API-first / integration readiness</h4><p>Core actions (create task, confirm assignment, report delay, submit change order) are a stable API from day one — the web dashboard and mobile app are both just clients of it, and it's what Phase 4 integrations plug into.</p></div>
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s17">
+      <div class="eyebrow">17 · MVP Scope</div>
+      <h2>Communication, readiness, and proof. Nothing else yet.</h2>
+      <p class="lede"><strong>MVP goal:</strong> help contractors reduce phone calls, prevent wasted trade trips, keep homeowners informed, and create proof of progress.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h4>MVP must-have features</h4>
+          <ol style="margin:0;padding-left:20px;font-size:14px;">
+            <li>Project creation</li>
+            <li>Homeowner invite</li>
+            <li>Trade invite</li>
+            <li>Project timeline</li>
+            <li>Trade task assignment</li>
+            <li>Trade accept/decline</li>
+            <li>Readiness checklist</li>
+            <li>Site access instructions</li>
+            <li>Drawing/document upload</li>
+            <li>Mobile trade job view</li>
+            <li>Check-in/check-out</li>
+            <li>Photo upload</li>
+            <li>Mark complete</li>
+            <li>Delay reporting</li>
+            <li>Automatic homeowner updates</li>
+            <li>Change order approval</li>
+            <li>Daily report</li>
+            <li>Contractor dashboard</li>
+            <li>Activity log</li>
+            <li>Basic notifications by email/SMS</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h4>Explicitly not in MVP</h4>
+          <ul style="margin:0;padding-left:18px;font-size:14px;">
+            <li>Full AI scheduler</li>
+            <li>Deep accounting</li>
+            <li>Full Procore-style replacement</li>
+            <li>Complex material procurement</li>
+            <li>Full municipal/inspection integrations</li>
+            <li>Advanced payment processing</li>
+            <li>Complex enterprise permissions</li>
+            <li>Heavy trade onboarding</li>
+            <li>Full marketplace</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>MVP acceptance criteria</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Scenario</th><th>Acceptance criterion</th></tr>
+        <tr><td>Contractor creates a project</td><td>Project exists with address, type, and homeowner link in under 5 minutes</td></tr>
+        <tr><td>Contractor invites homeowner</td><td>Portal access activates on invite; homeowner receives a working secure link</td></tr>
+        <tr><td>Contractor creates timeline</td><td>Phases and tasks exist in sequence before the first trade is invited</td></tr>
+        <tr><td>Contractor assigns trade</td><td>Assignment created with scope, address, and dates in a single invite</td></tr>
+        <tr><td>Trade receives invite</td><td>Invite includes scope, address, dates, and current readiness status</td></tr>
+        <tr><td>Trade sees scope/address/readiness</td><td>All three visible on the same screen, no navigation required</td></tr>
+        <tr><td>Trade accepts work</td><td>Acceptance is a binding, timestamped state — not a verbal yes</td></tr>
+        <tr><td>Trade checks in</td><td>Single tap, visible immediately to contractor and homeowner</td></tr>
+        <tr><td>Trade uploads photos</td><td>Photo tagged to the specific task automatically</td></tr>
+        <tr><td>Trade marks complete</td><td>Requires at least one photo; timestamped</td></tr>
+        <tr><td>Homeowner receives update</td><td>Plain-language update sent automatically on milestone completion</td></tr>
+        <tr><td>Contractor sees status</td><td>Dashboard reflects true task/readiness status in realtime</td></tr>
+        <tr><td>Change order can be approved</td><td>Cost and schedule impact both mandatory before sending; approval timestamped</td></tr>
+        <tr><td>Daily report can be generated</td><td>Auto-compiles from the day's actual field activity, not a static template</td></tr>
+        <tr><td>No critical data is lost</td><td>Every state transition writes an Activity Log entry</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s18">
+      <div class="eyebrow">18 · UX Principles</div>
+      <h2>Rules that keep the product from becoming what it replaces</h2>
+      <ul>
+        <li>Mobile-first for trades — the field experience is the highest-leverage surface in the product</li>
+        <li>Homeowner-friendly language — no construction jargon, ever, in homeowner-facing copy</li>
+        <li>Contractor dashboard clarity — priority-ranked, not a flat list of everything</li>
+        <li>Minimal typing in the field — taps and photos do the work, free text is optional</li>
+        <li>Clear status labels — the five-state readiness vocabulary (§12) used consistently everywhere</li>
+        <li>Always show what happens next — never a dead-end status with no forward path</li>
+        <li>Reduce calls, don't create more work — every automated message must save a call, not add a task</li>
+        <li>Make readiness visible — a blocked task is always visible before someone drives to it</li>
+        <li>Avoid blame in homeowner communication — delay language is always neutral, never trade-vs-trade</li>
+        <li>Make approvals explicit — a decision is either approved or it isn't; no ambiguous middle state</li>
+        <li>Use photos as proof — every completion claim has visual evidence attached</li>
+        <li>Make delays understandable — a reason and a new date, every time, no exceptions</li>
+        <li>Make every sensitive automated message reviewable — delay explanations and change orders always pass through the contractor first</li>
+      </ul>
+
+      <h3>Good UX pattern examples</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Pattern</th><th>What good looks like</th></tr>
+        <tr><td>Readiness status</td><td>A colored pill with the exact blocking item named, not just "not ready"</td></tr>
+        <tr><td>Delay reporting</td><td>Reason picked from a quick-select list, submitted in under 3 taps — faster than dialing a phone</td></tr>
+        <tr><td>Trade confirmation</td><td>Accept/decline visible directly from the push notification, no app launch required</td></tr>
+        <tr><td>Homeowner daily report</td><td>Leads with "what's next," not a wall of timestamps</td></tr>
+        <tr><td>Change order approval</td><td>Before/after cost shown side by side, in the same view as the approve button</td></tr>
+        <tr><td>Contractor alerts</td><td>Ranked by downstream impact, not chronological order</td></tr>
+        <tr><td>Mobile check-in</td><td>One tap from the job detail screen, no separate check-in app or menu</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s19">
+      <div class="eyebrow">19 · Testing &amp; QA Plan</div>
+      <h2>Trust is earned one accurate status at a time</h2>
+
+      <h3>Function-by-function testing</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Function</th><th>Test steps</th><th>Expected result</th><th>Failure sign</th><th>Severity</th></tr>
+        <tr><td>Project creation</td><td>Create with required fields</td><td>Project record exists, homeowner linkable</td><td>Missing required field allowed through</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td>Homeowner invite</td><td>Send invite, open link</td><td>Portal access activates, no password required for first view</td><td>Broken/expired link</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td>Trade invite</td><td>Invite a trade to a task</td><td>Scope/address/dates all included in one invite</td><td>Trade must ask for missing info</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td>Timeline creation</td><td>Add phases and tasks</td><td>Sequence and dependencies persist correctly</td><td>Wrong order after save</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td>Task assignment</td><td>Assign a trade to a task</td><td>Assignment status starts "invited"</td><td>Status defaults incorrectly</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td>Readiness checklist</td><td>Block a task on a missing item, then resolve it</td><td>Status flips from Not Ready to Ready automatically</td><td>Stale status after resolution</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td>Document upload</td><td>Upload, then revise, a drawing</td><td>Trade always sees latest revision, with an update alert</td><td>Trade views stale version silently</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td>Site access instructions</td><td>Add instructions, view as trade</td><td>Visible on the job detail screen without navigation</td><td>Buried or missing</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td>Trade accept/decline</td><td>Accept, then decline a separate invite</td><td>Status updates correctly; decline triggers re-invite flow</td><td>Decline leaves task in limbo</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td>Trade mobile job view</td><td>Open job detail on a mobile device</td><td>Loads in under 2 seconds, all key info on one screen</td><td>Slow load, requires scrolling/tapping to find basics</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td>Check-in/check-out</td><td>Check in, then check out</td><td>Timestamps recorded, visible to contractor immediately</td><td>Delayed or missing status update</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td>Photo upload</td><td>Upload a photo tagged to a task</td><td>Photo attached to correct task, homeowner-visibility default correct</td><td>Photo attached to wrong task</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td>Mark complete</td><td>Attempt without photo, then with photo</td><td>Rejected without photo; accepted with photo</td><td>Completion accepted with no evidence</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td>Delay report</td><td>Submit a delay with reason</td><td>Contractor and homeowner both notified with a new target date</td><td>Notified with no new date</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td>Automatic homeowner update</td><td>Complete a milestone task</td><td>Plain-language update sent post-contractor-review</td><td>Jargon-heavy or unreviewed message sent</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td>Change order approval</td><td>Create, send, approve a change order</td><td>Before/after cost and schedule both mandatory and visible</td><td>Approved with hidden cost impact</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td>Daily report</td><td>Generate a report on an active day</td><td>Reflects actual field activity, not a padded template</td><td>Generic report sent on an inactive day</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td>Contractor dashboard</td><td>Load dashboard with mixed project states</td><td>At-risk items ranked above routine ones</td><td>Flat, unprioritized list</td><td><span class="sev sev-med">Med</span></td></tr>
+        <tr><td>Notifications</td><td>Trigger each notification type</td><td>Correct channel, correct recipient, correct content</td><td>Wrong recipient or channel</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td>Permissions</td><td>Attempt cross-project/role access</td><td>Blocked at the API layer</td><td>Data leaks across projects or roles</td><td><span class="sev sev-high">High</span></td></tr>
+        <tr><td>Activity log</td><td>Perform a state change, check the log</td><td>Entry recorded with actor, action, timestamp</td><td>Missing or vague log entry</td><td><span class="sev sev-med">Med</span></td></tr>
+      </table></div>
+
+      <h3>End-to-end test scenarios</h3>
+      <p>Normal project flow · trade declines job · trade delays arrival · site not ready · materials missing · previous trade incomplete · homeowner approval needed · change order approved · change order rejected · daily report sent · photo proof completed · contractor dashboard updates correctly.</p>
+
+      <h3>User testing scripts</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Script</th><th>Tasks</th><th>Observation points</th><th>Success criteria</th></tr>
+        <tr><td>Contractor</td><td>Create a project end-to-end, invite a trade, send a change order</td><td>Hesitation points, repeated clicks, questions asked aloud</td><td>Completes core flow without help in under 10 minutes</td></tr>
+        <tr><td>Trade</td><td>Accept a job, check in, upload a photo, mark complete</td><td>Number of taps, confusion about next step</td><td>Completes full flow in under 5 taps beyond viewing</td></tr>
+        <tr><td>Homeowner</td><td>Open the portal, read today's status, respond to a decision</td><td>Confusion about jargon, ability to find "what's next"</td><td>Answers "what's happening" without asking a follow-up question</td></tr>
+      </table></div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+    <section class="sec" id="s20">
+      <div class="eyebrow">20 · Pricing &amp; Revenue Model</div>
+      <h2>Price the coordination loop, not the seats</h2>
+      <div class="table-wrap"><table>
+        <tr><th>Plan</th><th>Suggested price</th><th>Included</th><th>Best fit</th></tr>
+        <tr><td>Starter</td><td>~$79-149/mo</td><td>Up to ~5 active projects, core timeline + readiness + homeowner portal + notifications</td><td>Small contractors, solo remodelers</td></tr>
+        <tr><td>Growth</td><td>~$299-499/mo</td><td>Up to ~20 active projects, team roles, richer daily reports, homeowner portal branding</td><td>Active builders/remodelers with a small office team</td></tr>
+        <tr><td>Pro</td><td>~$699-1,499/mo</td><td>Unlimited projects, advanced scheduling, more users, integrations, admin controls</td><td>Larger builders running many concurrent projects</td></tr>
+        <tr><td>Enterprise</td><td>Custom</td><td>Custom integrations, advanced permissions, API access, dedicated support</td><td>Builder networks, franchises, municipal partnerships</td></tr>
+      </table></div>
+      <h3>Add-ons</h3>
+      <p>SMS usage beyond an included volume · AI assistant (drafting, forecasting) · advanced reporting/benchmarking · additional storage · white-label homeowner portal · payment/invoice module · municipal/inspection integration.</p>
+      <p><strong>Core vs. gated:</strong> the coordination loop itself (timeline, readiness checklist, trade confirmation, homeowner updates, photo proof, change orders, daily reports) stays in every paid tier — that's the product. AI, deep integrations, payments, and white-labeling are legitimate places to gate, since they're additive.</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s21">
+      <div class="eyebrow">21 · Go-To-Market Strategy</div>
+      <h2>Start where homeowner communication burden is highest</h2>
+      <div class="grid-2">
+        <div class="card"><h4>Best initial customers</h4><p>Residential remodelers and ADU builders — high trade-coordination density per project, a homeowner who's physically living through the disruption (maximizing the value of communication), and short enough project cycles to prove ROI in weeks.</p></div>
+        <div class="card"><h4>Why this beachhead</h4><p>Remodel/ADU homeowners generate the most "what's happening" calls per project dollar of any residential segment — the pain this product solves is at its sharpest here, making the pitch land fastest.</p></div>
+      </div>
+      <h3>Sales messaging</h3>
+      <p>Stop chasing trades · keep homeowners updated automatically · prevent wasted trips · know if the site is ready before dispatch · get photo proof of completed work · approve change orders without confusion · reduce disputes from missed communication.</p>
+      <h3>Launch plan</h3>
+      <ol>
+        <li>Pilot with 3-5 contractors on real, live projects</li>
+        <li>Onboard trades SMS-first — no app install required to participate</li>
+        <li>Collect homeowner feedback directly, not just contractor feedback</li>
+        <li>Measure communication-call reduction, trade confirmation rate, and delays avoided</li>
+        <li>Build case studies from pilot data before broader launch</li>
+      </ol>
+      <h3>Sales assets</h3>
+      <p>Homepage · demo video · contractor ROI calculator · trade onboarding flyer · homeowner portal screenshots · readiness checklist one-pager · before/after communication comparison · case study template.</p>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s22">
+      <div class="eyebrow">22 · Product Roadmap</div>
+      <h2>Five phases, coordination loop first</h2>
+
+      <div class="roadmap-phase">
+        <div class="ph-head"><b>Phase 1 — MVP Coordination Core</b><span>Release criteria: pilot contractors report fewer "what's happening" calls within 30 days</span></div>
+        <div class="ph-body"><p>Timeline · trade invite · readiness checklist · mobile trade updates · homeowner updates · photo proof · change order approval · daily report.</p></div>
+      </div>
+      <div class="roadmap-phase">
+        <div class="ph-head"><b>Phase 2 — Smarter Scheduling and Alerts</b><span>Release criteria: readiness status trusted enough that trades stop double-checking by phone</span></div>
+        <div class="ph-body"><p>Dependencies · auto-notify next trade · late-trade alerts · site readiness scoring · contractor dashboard improvements · calendar integration · better homeowner timeline.</p></div>
+      </div>
+      <div class="roadmap-phase">
+        <div class="ph-head"><b>Phase 3 — Materials, Inspections, and Payments</b><span>Release criteria: at least one full remodel project runs entirely through materials + inspection gating</span></div>
+        <div class="ph-body"><p>Material delivery status · inspection milestones · payment milestones · invoice status · punch list/warranty · supplier coordination.</p></div>
+      </div>
+      <div class="roadmap-phase">
+        <div class="ph-head"><b>Phase 4 — Integrations and Ecosystem</b><span>Release criteria: one real project's estimate-to-actual duration improves using an integrated data source</span></div>
+        <div class="ph-body"><p>Drawliner integration · ADUFlow integration · QuickBooks integration · Buildertrend/Procore integration · Bluebeam/Drawliner drawing access · CRM integration.</p></div>
+      </div>
+      <div class="roadmap-phase">
+        <div class="ph-head"><b>Phase 5 — AI Coordination Engine</b><span>Release criteria: AI recommendations accepted by contractors at a meaningfully high rate, fully auditable</span></div>
+        <div class="ph-body"><p>AI conflict detection · AI homeowner update drafting · AI readiness warnings · AI delay forecasting · AI natural-language schedule questions · AI daily summary generation with contractor approval.</p></div>
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+
+    <section class="sec" id="s23">
+      <div class="eyebrow">23 · Final Build Priorities</div>
+      <h2>What to build, and what to leave alone</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h4>Top 10 MVP build priorities</h4>
+          <ol style="margin:0;padding-left:20px;font-size:14px;">
+            <li>Contractor project creation</li>
+            <li>Homeowner invite and portal</li>
+            <li>Trade invite and mobile job view</li>
+            <li>Project timeline</li>
+            <li>Trade readiness checklist</li>
+            <li>Trade accept/decline/confirm</li>
+            <li>Check-in/check-out</li>
+            <li>Photo proof and mark complete</li>
+            <li>Automatic homeowner updates</li>
+            <li>Change order approval and daily reports</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h4>Top 10 differentiators</h4>
+          <ol style="margin:0;padding-left:20px;font-size:14px;">
+            <li>"Am I ready to go?" trade readiness check</li>
+            <li>Homeowner-friendly automatic updates</li>
+            <li>Progress proof with photos</li>
+            <li>Change order approval clarity</li>
+            <li>Daily reports generated from real field activity</li>
+            <li>Site readiness issue board</li>
+            <li>Automatic next-trade notification</li>
+            <li>Contractor dashboard for today/tomorrow/late work</li>
+            <li>Trade SMS-first workflow</li>
+            <li>Future integration with Drawliner, ADUFlow, permits, inspections, and estimating</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="final-rec">
+        <h3>Final recommendation</h3>
+        <p>Start with communication, readiness, and proof — not advanced scheduling. The readiness checklist and automatic homeowner updates are what make this feel different from a calendar on day one; a fancier scheduler doesn't matter if trades still show up to unready sites and homeowners still have to call to find out why.</p>
+        <p>Make trade adoption effortless — SMS-first, five taps or fewer for every core action, no forced app install. The coordination loop only works if trades actually use the check-in/photo/complete flow; if they don't, the readiness data going into the checklist goes stale and the whole differentiator collapses quietly.</p>
+        <p>Use homeowner communication as the clearest sales hook — it's the pain point every stakeholder (contractor, trade, and homeowner) has a personal stake in fixing, and it's the easiest thing to demo convincingly in a single screen.</p>
+        <p>Build the MVP around real jobs, not theoretical workflows — pilot on live projects, not sandbox demos, so the readiness checklist and delay-reporting logic get pressure-tested against how contractors actually work before wider release.</p>
+        <p>Add AI, deep integrations, and advanced scheduling only after the core coordination loop is trusted — those are compounding advantages, not launch requirements, and building them early risks distracting from the one mechanic (readiness before dispatch) that makes this product worth switching to.</p>
+      </div>
+      <a class="backtotop" href="#s1">↑ index</a>
+    </section>
+  </main>
+</div>

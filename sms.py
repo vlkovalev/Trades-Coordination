@@ -56,8 +56,12 @@ def _send_sms(to, body):
 
 
 def _within_quiet_hours(timezone_name):
-    now_local = datetime.now(ZoneInfo(timezone_name))
-    return QUIET_HOURS_START <= now_local.hour < QUIET_HOURS_END
+    try:
+        now_local = datetime.now(ZoneInfo(timezone_name))
+        return QUIET_HOURS_START <= now_local.hour < QUIET_HOURS_END
+    except Exception:
+        now_local = datetime.now()
+        return QUIET_HOURS_START <= now_local.hour < QUIET_HOURS_END
 
 
 def notify_homeowner(project, event_type, message):

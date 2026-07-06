@@ -3,108 +3,186 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ task.name }}</title>
+  <title>Task Details — Constrivo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f8fafc; color: #0f172a; }
-    main { max-width: 640px; margin: 0 auto; padding: 20px 16px 56px; }
-    .card { background: white; border-radius: 14px; padding: 16px; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); margin-bottom: 14px; }
-    .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: bold; }
-    .pill.pending { background: #e2e8f0; color: #475569; }
-    .pill.invited { background: #fef9c3; color: #92730b; }
-    .pill.confirmed { background: #dbeafe; color: #1d4ed8; }
-    .pill.checked_in { background: #e0f2fe; color: #0369a1; }
-    .pill.complete { background: #dcfce7; color: #166534; }
-    .pill.delayed { background: #fee2e2; color: #b91c1c; }
-    button { background: #2563eb; color: white; border: none; padding: 12px 16px; border-radius: 999px; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 8px; }
-    button.secondary { background: #475569; }
-    button.danger { background: #b91c1c; }
-    input[type=text], textarea, input[type=file] { width: 100%; padding: 8px; margin-top: 6px; box-sizing: border-box; }
-    label { font-weight: bold; margin-top: 10px; display: block; }
-    img.photo { max-width: 100%; border-radius: 8px; margin-top: 8px; }
-    a { display: inline-block; margin-bottom: 12px; }
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .photo-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      overflow: hidden;
+      text-align: center;
+    }
+    .photo-card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-card span {
+      display: block;
+      font-size: 0.75rem;
+      padding: 6px;
+      color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
-  <main>
-    <a href="javascript:history.back()">&larr; Back</a>
-    <div class="card">
-      <h1>{{ task.name }}</h1>
-      <p>{{ task.project.name }} &middot; {{ task.trade_type_needed }}<br>
-      Status: <span class="pill {{ task.status }}">{{ task.status }}</span></p>
-      {% if assignment %}<p>Assigned to: {{ assignment.trade_company.name }}</p>{% endif %}
+  <header>
+    <div class="nav-container">
+      <div class="logo">Constri<span>vo</span></div>
+      <div class="flex align-center gap-12">
+        <span class="user-badge">{{ role|upper }} Portal</span>
+        <a href="{{ url_for('change_password') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Change Password</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Logout</a>
+      </div>
     </div>
+  </header>
+  
+  <main style="max-width: 800px;">
+    {% if role == 'gc' %}
+      <a href="{{ url_for('project_detail', project_id=task.project_id) }}" style="display: inline-block; margin-bottom: 20px;">&larr; Back to project</a>
+    {% elif role == 'trade' %}
+      <a href="{{ url_for('trade_queue', trade_company_id=session.get('trade_company_id')) }}" style="display: inline-block; margin-bottom: 20px;">&larr; Back to queue</a>
+    {% endif %}
 
     {% with messages = get_flashed_messages(category_filter=["success", "error"]) %}
       {% if messages %}
-        <div class="card">{% for m in messages %}<div>{{ m }}</div>{% endfor %}</div>
+        {% for message in messages %}
+          {% if 'success' in message or 'complete' in message %}
+            <div class="alert-box alert-success">{{ message }}</div>
+          {% else %}
+            <div class="alert-box alert-error">{{ message }}</div>
+          {% endif %}
+        {% endfor %}
       {% endif %}
     {% endwith %}
 
-    {% if can_act %}
-      {% if task.status == "confirmed" %}
-        <div class="card">
-          <form method="post" action="{{ url_for('checkin_task', task_id=task.id) }}">
-            <button type="submit">Check in</button>
-          </form>
+    <div class="card">
+      <div class="flex justify-between align-center mb-16">
+        <div>
+          <span class="badge badge-{{ task.status }}" style="margin-bottom: 8px;">{{ task.status }}</span>
+          <h2>{{ task.name }}</h2>
+          <p class="text-muted" style="margin-top: 4px; font-size: 0.9rem;">Project: <strong>{{ task.project.name }}</strong> &bull; Address: {{ task.project.address }}</p>
         </div>
-      {% endif %}
-
-      {% if task.status in ("confirmed", "checked_in") %}
-        <div class="card">
-          <h2>Mark complete</h2>
-          <form method="post" action="{{ url_for('complete_task', task_id=task.id) }}" enctype="multipart/form-data">
-            <label for="photo">Completion photo{% if not task.photos %} (required){% endif %}</label>
-            <input type="file" id="photo" name="photo" accept="image/*">
-            <label for="caption">Caption (optional)</label>
-            <input type="text" id="caption" name="caption">
-            <button type="submit">Mark complete</button>
-          </form>
+        <div style="font-family: Consolas, monospace; font-size: 0.9rem;">
+          Seq: #{{ task.sequence_order }}
         </div>
+      </div>
 
-        <div class="card">
-          <h2>Report a delay</h2>
-          <form method="post" action="{{ url_for('report_delay', task_id=task.id) }}">
-            <label for="reason">Reason</label>
-            <textarea id="reason" name="reason" rows="3" required></textarea>
-            <button type="submit" class="danger">Report delay</button>
-          </form>
-        </div>
-      {% endif %}
-
-      {% if task.status == "delayed" %}
-        <div class="card">
-          <h2>Mark complete</h2>
-          <form method="post" action="{{ url_for('complete_task', task_id=task.id) }}" enctype="multipart/form-data">
-            <label for="photo2">Completion photo{% if not task.photos %} (required){% endif %}</label>
-            <input type="file" id="photo2" name="photo" accept="image/*">
-            <label for="caption2">Caption (optional)</label>
-            <input type="text" id="caption2" name="caption">
-            <button type="submit">Mark complete</button>
-          </form>
-        </div>
-      {% endif %}
-    {% endif %}
-
-    {% if task.photos %}
-      <div class="card">
-        <h2>Completion photos</h2>
-        {% for photo in task.photos %}
+      <div style="border-top: 1px solid var(--panel-border); padding-top: 16px; margin-top: 16px;">
+        <div class="grid grid-2" style="font-size: 0.95rem; gap: 14px 20px;">
           <div>
-            <img class="photo" src="{{ url_for('uploaded_file', filename=photo.filename) }}" alt="Completion photo">
-            {% if photo.caption %}<p>{{ photo.caption }}</p>{% endif %}
+            <span class="text-muted" style="display: block; font-size: 0.8rem;">Trade Type Needed:</span>
+            <strong>{{ task.trade_type_needed|capitalize }}</strong>
           </div>
-        {% endfor %}
+          <div>
+            <span class="text-muted" style="display: block; font-size: 0.8rem;">Scheduled Date:</span>
+            <strong>{{ task.scheduled_date or 'TBD' }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subcontractor Actions Section -->
+    {% if role == 'trade' %}
+      <div class="card">
+        <h3 style="margin-bottom: 16px;">Crew Actions</h3>
+        
+        <div class="flex gap-12" style="flex-wrap: wrap;">
+          {% if task.status == 'confirmed' %}
+            <form method="post" action="{{ url_for('checkin_task', task_id=task.id) }}">
+              <button type="submit" class="btn btn-primary" style="background: var(--status-checked_in);">Check In Crew</button>
+            </form>
+          {% endif %}
+          
+          {% if task.status in ('confirmed', 'checked_in') %}
+            <!-- Delay reporting -->
+            <button class="btn btn-secondary" onclick="document.getElementById('delay-box').style.display='block'">Report Delay</button>
+          {% endif %}
+        </div>
+
+        {% if task.status in ('confirmed', 'checked_in') %}
+          <!-- Complete Task Form -->
+          <div style="margin-top: 24px; border-top: 1px dashed var(--panel-border); padding-top: 20px;">
+            <h4>Mark Task Complete</h4>
+            <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 12px;">Before marking complete, upload high-fidelity photo proof for client approval.</p>
+            <form method="post" action="{{ url_for('complete_task', task_id=task.id) }}" enctype="multipart/form-data">
+              <label>Photo Proof <span style="color: var(--status-delayed);">*</span><br>
+                <input type="file" name="photo" accept="image/*" required style="margin-top: 6px;">
+              </label><br><br>
+              <button type="submit" class="btn btn-primary" style="background: var(--status-complete);">Complete &amp; Submit Photo</button>
+            </form>
+          </div>
+        {% endif %}
+
+        <!-- Delay Dialog Box (inline modal look-alike) -->
+        <div id="delay-box" style="display: none; margin-top: 20px; padding: 18px; border: 1px solid var(--status-delayed); border-radius: 10px; background: rgba(239, 68, 68, 0.03);">
+          <h4 style="color: var(--status-delayed); margin-bottom: 8px;">Report Delay Event</h4>
+          <form method="post" action="{{ url_for('report_delay', task_id=task.id) }}">
+            <label>Delay Reason<br>
+              <select name="reason" required style="margin-top: 6px; width: 100%;">
+                <option value="Previous trade incomplete">Previous trade incomplete</option>
+                <option value="Materials missing">Materials missing</option>
+                <option value="Weather blockout">Weather blockout</option>
+                <option value="Inspection failed/delayed">Inspection failed/delayed</option>
+                <option value="Staffing shortage">Staffing shortage</option>
+              </select>
+            </label><br><br>
+            <label>New Target Start Date<br>
+              <input type="date" name="new_date" required style="margin-top: 6px; width: 100%;">
+            </label><br><br>
+            <button type="submit" class="btn btn-primary" style="background: var(--status-delayed);">Log Delay &amp; Push Schedule</button>
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('delay-box').style.display='none'">Cancel</button>
+          </form>
+        </div>
       </div>
     {% endif %}
 
-    {% if task.delay_events %}
-      <div class="card">
-        <h2>Delay history</h2>
+    <!-- Photo logs card -->
+    <div class="card">
+      <h3>Progress Photos ({{ task.photos|length }})</h3>
+      {% if task.photos %}
+        <div class="photo-grid">
+          {% for p in task.photos %}
+            <div class="photo-card">
+              <img src="/static/uploads/{{ p.filename }}" alt="Progress Proof">
+              <span>{{ p.uploaded_at.strftime('%b %d, %H:%M') }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted" style="margin-top: 10px;">No progress photos uploaded yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Audit & delay history -->
+    <div class="card">
+      <h3>Milestone History Logs</h3>
+      <div style="margin-top: 14px; font-size: 0.85rem; line-height: 1.6;">
+        {% set history = [] %}
+        {% for a in task.assignments %}
+          {% set _ = history.append(a.trade_company.name ~ " was invited (Status: " ~ a.status ~ ") on " ~ a.invited_at.strftime('%Y-%m-%d %H:%M')) %}
+        {% endfor %}
         {% for d in task.delay_events %}
-          <p><strong>{{ d.reported_at.strftime('%b %d, %Y %I:%M %p') }}</strong> — {{ d.reason }}</p>
+          {% set _ = history.append("⚠️ Delay logged: '" ~ d.reason ~ "' — rescheduled from " ~ d.original_date ~ " to " ~ d.new_date) %}
+        {% endfor %}
+        
+        {% for item in history %}
+          <div style="padding: 6px 0; border-bottom: 1px solid var(--panel-border);">
+            {{ item }}
+          </div>
+        {% else %}
+          <p class="text-muted">No historical operations logged for this milestone task.</p>
         {% endfor %}
       </div>
-    {% endif %}
+    </div>
   </main>
 </body>
 </html>
