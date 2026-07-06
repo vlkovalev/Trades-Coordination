@@ -516,7 +516,83 @@ def register_routes(app):
     @role_required("gc")
     def manage_trades():
         trade_companies = TradeCompany.query.order_by(TradeCompany.name).all()
-        return render_template("manage_trades.html", trade_companies=trade_companies, trade_types=TRADE_TYPES)
+        logins_by_trade = {
+            u.trade_company_id: u for u in User.query.filter_by(role="trade").all() if u.trade_company_id
+        }
+        return render_template(
+            "manage_trades.html",
+            trade_companies=trade_companies,
+            trade_types=TRADE_TYPES,
+            logins_by_trade=logins_by_trade,
+        )
+
+    @app.route("/trades/<int:trade_company_id>/create-login", methods=["GET", "POST"])
+    @role_required("gc")
+    def create_trade_login(trade_company_id):
+        trade_company = TradeCompany.query.get_or_404(trade_company_id)
+        existing = User.query.filter_by(trade_company_id=trade_company_id, role="trade").first()
+        if existing:
+            flash(f"{trade_company.name} already has a login ({existing.username}).", "error")
+            return redirect(url_for("manage_trades"))
+
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "").strip()
+
+            errors = []
+            if not username:
+                errors.append("Username is required.")
+            elif User.query.filter_by(username=username).first():
+                errors.append("That username is already taken.")
+            if len(password) < 8:
+                errors.append("Password must be at least 8 characters.")
+
+            if errors:
+                for error in errors:
+                    flash(error, "error")
+                return render_template("create_trade_login.html", trade_company=trade_company)
+
+            user = User(
+                username=username,
+                password_hash=generate_password_hash(password),
+                role="trade",
+                trade_company_id=trade_company_id,
+            )
+            db.session.add(user)
+            _log_audit(
+                "GC/PM",
+                "create_trade_login",
+                "TradeCompany",
+                trade_company_id,
+                f"Created login '{username}' for {trade_company.name}",
+            )
+            db.session.commit()
+            flash(f"Login created for {trade_company.name}: {username}.", "success")
+            return redirect(url_for("manage_trades"))
+
+        return render_template("create_trade_login.html", trade_company=trade_company)
+
+    @app.route("/trades/<int:trade_company_id>/remove-login", methods=["POST"])
+    @role_required("gc")
+    def remove_trade_login(trade_company_id):
+        trade_company = TradeCompany.query.get_or_404(trade_company_id)
+        user = User.query.filter_by(trade_company_id=trade_company_id, role="trade").first()
+        if not user:
+            flash(f"{trade_company.name} has no login to remove.", "error")
+            return redirect(url_for("manage_trades"))
+
+        username = user.username
+        db.session.delete(user)
+        _log_audit(
+            "GC/PM",
+            "remove_trade_login",
+            "TradeCompany",
+            trade_company_id,
+            f"Removed login '{username}' for {trade_company.name}",
+        )
+        db.session.commit()
+        flash(f"Login '{username}' removed from {trade_company.name}.", "success")
+        return redirect(url_for("manage_trades"))
 
     @app.route("/trades/new", methods=["POST"])
     @role_required("gc")

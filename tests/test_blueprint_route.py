@@ -360,6 +360,43 @@ class TradeCoordinationRoutesTest(unittest.TestCase):
         with self.app.app_context():
             self.assertEqual(TradeCompany.query.count(), remaining)
 
+    def test_create_and_remove_trade_login(self):
+        self._login("gc_test")
+
+        with self.app.app_context():
+            electrical_id = TradeCompany.query.filter_by(trade_type="electrical").first().id
+
+        # No login yet, so it can be created.
+        created = self.client.post(
+            f"/trades/{electrical_id}/create-login",
+            data={"username": "sparky_login", "password": "sparkypass123"},
+            follow_redirects=True,
+        )
+        self.assertIn("Login created", created.get_data(as_text=True))
+
+        # A second attempt is refused — one login per trade company.
+        duplicate = self.client.post(
+            f"/trades/{electrical_id}/create-login",
+            data={"username": "someone_else", "password": "anotherpass123"},
+            follow_redirects=True,
+        )
+        self.assertIn("already has a login", duplicate.get_data(as_text=True))
+
+        # The new login actually works.
+        self.client.get("/logout")
+        login_check = self._login("sparky_login", password="sparkypass123")
+        self.assertIn("Crew Operations Queue", login_check.get_data(as_text=True))
+        self.client.get("/logout")
+
+        # GC removes the login, freeing the trade company up again.
+        self._login("gc_test")
+        removed = self.client.post(f"/trades/{electrical_id}/remove-login", follow_redirects=True)
+        self.assertIn("removed", removed.get_data(as_text=True))
+
+        self.client.get("/logout")
+        locked_out = self._login("sparky_login", password="sparkypass123")
+        self.assertIn("Invalid username or password", locked_out.get_data(as_text=True))
+
 
 if __name__ == "__main__":
     unittest.main()

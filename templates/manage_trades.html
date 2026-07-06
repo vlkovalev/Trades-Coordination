@@ -81,11 +81,13 @@
               <th>Phone</th>
               <th>Service Area</th>
               <th>Rating</th>
+              <th>Login</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {% for tc in trade_companies %}
+              {% set login = logins_by_trade.get(tc.id) %}
               <tr>
                 <td><input type="text" name="name" form="edit-{{ tc.id }}" value="{{ tc.name }}" aria-label="Name for {{ tc.name }}" required style="min-width: 160px;"></td>
                 <td>
@@ -98,16 +100,28 @@
                 <td><input type="text" name="phone" form="edit-{{ tc.id }}" value="{{ tc.phone }}" aria-label="Phone for {{ tc.name }}" required style="min-width: 130px;"></td>
                 <td><input type="text" name="service_area" form="edit-{{ tc.id }}" value="{{ tc.service_area or '' }}" aria-label="Service area for {{ tc.name }}" style="min-width: 130px;"></td>
                 <td class="text-muted" style="font-size: 0.85rem;">{{ tc.rating_display }}</td>
+                <td style="font-size: 0.85rem;">
+                  {% if login %}
+                    <span class="badge badge-complete" style="font-size: 0.7rem;">{{ login.username }}</span>
+                  {% else %}
+                    <span class="text-muted">No login</span>
+                  {% endif %}
+                </td>
                 <td>
-                  <div class="flex gap-12">
+                  <div class="flex gap-12" style="flex-wrap: wrap;">
                     <button type="submit" form="edit-{{ tc.id }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Save</button>
+                    {% if login %}
+                      <button type="submit" form="remove-login-{{ tc.id }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Remove Login</button>
+                    {% else %}
+                      <a href="{{ url_for('create_trade_login', trade_company_id=tc.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Create Login</a>
+                    {% endif %}
                     <button type="submit" form="delete-{{ tc.id }}" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;">Delete</button>
                   </div>
                 </td>
               </tr>
             {% else %}
               <tr>
-                <td colspan="6" class="text-center text-muted" style="padding: 24px;">No trade companies yet — add one above.</td>
+                <td colspan="7" class="text-center text-muted" style="padding: 24px;">No trade companies yet — add one above.</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -116,6 +130,8 @@
 
       {% for tc in trade_companies %}
         <form id="edit-{{ tc.id }}" method="post" action="{{ url_for('edit_trade_company', trade_company_id=tc.id) }}"></form>
+        <form id="remove-login-{{ tc.id }}" method="post" action="{{ url_for('remove_trade_login', trade_company_id=tc.id) }}"
+              onsubmit="return confirm('Remove the login for {{ tc.name }}? They will not be able to log in until a new one is created.');"></form>
         <form id="delete-{{ tc.id }}" method="post" action="{{ url_for('delete_trade_company', trade_company_id=tc.id) }}"
               onsubmit="return confirm('Remove {{ tc.name }}? This only works if they have no assignments, reviews, or a login.');"></form>
       {% endfor %}
