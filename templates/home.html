@@ -56,9 +56,35 @@
       </div>
     </div>
 
+    <h2 style="margin-top: 40px; margin-bottom: 4px;">Find a trade</h2>
+    <p class="text-muted" style="margin-bottom: 16px;">Browse the trades on this platform and see how homeowners have rated them — no account needed to look.</p>
+
+    <form method="get" style="margin-bottom: 20px; max-width: 280px;">
+      <label for="trade_type" style="margin-top: 0;">Filter by trade</label>
+      <select name="trade_type" id="trade_type" onchange="this.form.submit()">
+        <option value="">All trades</option>
+        {% for t in trade_types %}
+          <option value="{{ t }}" {% if t == selected_trade_type %}selected{% endif %}>{{ t|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    <div class="grid grid-3">
+      {% for tc in trade_companies %}
+        <div class="card">
+          <span class="badge badge-invited" style="margin-bottom: 10px;">{{ tc.trade_type|capitalize }}</span>
+          <h3 style="margin-bottom: 4px;">{{ tc.name }}</h3>
+          <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 4px;">{{ tc.service_area or "Service area not listed" }}</p>
+          <p style="font-size: 0.9rem; font-weight: 600; color: var(--accent-color); margin-bottom: 0;">{{ tc.rating_display }}</p>
+        </div>
+      {% else %}
+        <p class="text-muted">No trades match that filter yet.</p>
+      {% endfor %}
+    </div>
+
     <div class="card" style="margin-top: 32px; text-align: center;">
-      <p class="text-muted" style="margin-bottom: 12px;">Already have an account?</p>
-      <a href="{{ url_for('login') }}" class="btn btn-primary" style="padding: 10px 24px;">Log in</a>
+      <p class="text-muted" style="margin-bottom: 12px;">Ready to work with one of them, or already have an account?</p>
+      <a href="{{ url_for('login') }}" class="btn btn-primary" style="padding: 10px 24px;">Log in to proceed</a>
     </div>
   </main>
 </body>

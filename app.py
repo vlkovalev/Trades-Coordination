@@ -24,6 +24,7 @@ from models import (
     DelayEvent,
     Notification,
     Project,
+    Review,
     Task,
     TRADE_TYPES,
     TradeCompany,
@@ -189,7 +190,19 @@ def register_routes(app):
     def index():
         if "user_id" in session:
             return redirect(url_for("dashboard_redirect"))
-        return render_template("home.html")
+
+        selected_trade_type = request.args.get("trade_type", "")
+        trades_query = TradeCompany.query
+        if selected_trade_type in TRADE_TYPES:
+            trades_query = trades_query.filter_by(trade_type=selected_trade_type)
+        trade_companies = trades_query.order_by(TradeCompany.name).all()
+
+        return render_template(
+            "home.html",
+            trade_companies=trade_companies,
+            trade_types=TRADE_TYPES,
+            selected_trade_type=selected_trade_type,
+        )
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
@@ -437,7 +450,7 @@ def register_routes(app):
     def trade_queue(trade_company_id):
         if session.get("trade_company_id") != trade_company_id:
             flash("That's not your company.", "error")
-            return redirect(url_for("role_picker"))
+            return redirect(url_for("login"))
 
         trade_company = TradeCompany.query.get_or_404(trade_company_id)
 
@@ -466,7 +479,7 @@ def register_routes(app):
         assignment = Assignment.query.get_or_404(assignment_id)
         if session.get("trade_company_id") != assignment.trade_company_id:
             flash("That invitation doesn't belong to your company.", "error")
-            return redirect(url_for("role_picker"))
+            return redirect(url_for("login"))
 
         assignment.status = "accepted"
         assignment.responded_at = datetime.utcnow()
@@ -494,7 +507,7 @@ def register_routes(app):
         assignment = Assignment.query.get_or_404(assignment_id)
         if session.get("trade_company_id") != assignment.trade_company_id:
             flash("That invitation doesn't belong to your company.", "error")
-            return redirect(url_for("role_picker"))
+            return redirect(url_for("login"))
 
         assignment.status = "declined"
         assignment.responded_at = datetime.utcnow()
@@ -530,7 +543,7 @@ def register_routes(app):
         )
         if not (is_gc or is_assigned_trade):
             flash("You don't have access to that task.", "error")
-            return redirect(url_for("role_picker"))
+            return redirect(url_for("login"))
 
         return render_template(
             "task_detail.html",
@@ -546,7 +559,7 @@ def register_routes(app):
         assignment = _current_assignment(task)
         if not assignment or session.get("trade_company_id") != assignment.trade_company_id:
             flash("You don't have access to that task.", "error")
-            return redirect(url_for("role_picker"))
+            return redirect(url_for("login"))
 
         task.status = "checked_in"
         _log_audit(
@@ -563,7 +576,7 @@ def register_routes(app):
         assignment = _current_assignment(task)
         if not assignment or session.get("trade_company_id") != assignment.trade_company_id:
             flash("You don't have access to that task.", "error")
-            return redirect(url_for("role_picker"))
+            return redirect(url_for("login"))
 
         photo = request.files.get("photo")
         caption = request.form.get("caption", "").strip() or None
@@ -631,7 +644,7 @@ def register_routes(app):
         assignment = _current_assignment(task)
         if not assignment or session.get("trade_company_id") != assignment.trade_company_id:
             flash("You don't have access to that task.", "error")
-            return redirect(url_for("role_picker"))
+            return redirect(url_for("login"))
 
         reason = request.form.get("reason", "").strip()
         if not reason:
@@ -672,7 +685,7 @@ def register_routes(app):
     def homeowner_view(project_id):
         if session.get("project_id") != project_id:
             flash("That's not your project.", "error")
-            return redirect(url_for("role_picker"))
+            return redirect(url_for("login"))
 
         project = Project.query.get_or_404(project_id)
         tasks = Task.query.filter_by(project_id=project_id).order_by(Task.sequence_order).all()
@@ -684,6 +697,17 @@ def register_routes(app):
         )
         next_up = next((t for t in tasks if t.status != "complete"), None)
 
+        reviewable_trade_ids = (
+            db.session.query(Assignment.trade_company_id)
+            .join(Task)
+            .filter(Task.project_id == project_id, Task.status == "complete", Assignment.status == "accepted")
+            .distinct()
+        )
+        reviewable_trades = TradeCompany.query.filter(TradeCompany.id.in_(reviewable_trade_ids)).all()
+        existing_reviews = {
+            r.trade_company_id: r for r in Review.query.filter_by(project_id=project_id).all()
+        }
+
         return render_template(
             "homeowner_view.html",
             project=project,
@@ -691,7 +715,60 @@ def register_routes(app):
             active_delays=active_delays,
             next_up=next_up,
             plain_status=PLAIN_STATUS,
+            reviewable_trades=reviewable_trades,
+            existing_reviews=existing_reviews,
         )
+
+    @app.route("/projects/<int:project_id>/trades/<int:trade_company_id>/review", methods=["POST"])
+    @role_required("homeowner")
+    def submit_review(project_id, trade_company_id):
+        if session.get("project_id") != project_id:
+            flash("That's not your project.", "error")
+            return redirect(url_for("login"))
+
+        is_reviewable = (
+            db.session.query(Assignment.id)
+            .join(Task)
+            .filter(
+                Task.project_id == project_id,
+                Task.status == "complete",
+                Assignment.status == "accepted",
+                Assignment.trade_company_id == trade_company_id,
+            )
+            .first()
+            is not None
+        )
+        if not is_reviewable:
+            flash("You can only review a trade that has completed work on this project.", "error")
+            return redirect(url_for("homeowner_view", project_id=project_id))
+
+        try:
+            rating = int(request.form.get("rating", ""))
+        except ValueError:
+            rating = 0
+        comment = request.form.get("comment", "").strip() or None
+
+        if rating < 1 or rating > 5:
+            flash("Rating must be between 1 and 5 stars.", "error")
+            return redirect(url_for("homeowner_view", project_id=project_id))
+
+        review = Review.query.filter_by(project_id=project_id, trade_company_id=trade_company_id).first()
+        trade_company = TradeCompany.query.get_or_404(trade_company_id)
+        if review:
+            review.rating = rating
+            review.comment = comment
+            action = "update_review"
+        else:
+            review = Review(project_id=project_id, trade_company_id=trade_company_id, rating=rating, comment=comment)
+            db.session.add(review)
+            action = "leave_review"
+
+        _log_audit(
+            "Homeowner", action, "Review", trade_company_id, f"{rating}-star review for {trade_company.name}"
+        )
+        db.session.commit()
+        flash("Review saved. Thank you!", "success")
+        return redirect(url_for("homeowner_view", project_id=project_id))
 
     # ------------------------------------------------------------------
     # Inbound SMS (STOP/START opt-out handling — unchanged logic, now

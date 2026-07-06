@@ -19,6 +19,15 @@
     .timeline-item:last-child { border-bottom: none; }
     .delay-banner { background: #fee2e2; color: #b91c1c; padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; }
     .topbar { display: flex; justify-content: space-between; align-items: center; }
+    .review-block { border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 12px; }
+    .review-block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+    .review-block select { padding: 6px 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 6px; font-family: inherit; }
+    .review-block textarea { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-family: inherit; margin-top: 6px; }
+    .review-submit { display: block; margin-top: 8px; background: #2563eb; color: white; border: none; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 0.85rem; }
+    .existing-rating { color: #b45309; font-weight: bold; }
+    .alert-box { padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: 0.9rem; }
+    .alert-success { background: #dcfce7; color: #166534; }
+    .alert-error { background: #fee2e2; color: #b91c1c; }
   </style>
 </head>
 <body>
@@ -29,6 +38,14 @@
       <a href="{{ url_for('logout') }}">Logout</a>
     </div>
     <p>{{ project.address }}</p>
+
+    {% with messages = get_flashed_messages(category_filter=["success", "error"]) %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert-box {% if 'saved' in message or 'Thank you' in message %}alert-success{% else %}alert-error{% endif %}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
     {% if active_delays %}
       {% for d in active_delays %}
@@ -56,6 +73,32 @@
         <p>No work scheduled yet.</p>
       {% endfor %}
     </div>
+
+    {% if reviewable_trades %}
+      <div class="card">
+        <h2>Rate your trades</h2>
+        <p style="color: #64748b; font-size: 0.85rem;">Once a trade finishes their work on your project, you can leave a rating here.</p>
+        {% for tc in reviewable_trades %}
+          {% set existing = existing_reviews.get(tc.id) %}
+          <div class="review-block">
+            <strong>{{ tc.name }}</strong>
+            {% if existing %}
+              <span class="existing-rating">— you rated this {{ existing.rating }}/5</span>
+            {% endif %}
+            <form method="post" action="{{ url_for('submit_review', project_id=project.id, trade_company_id=tc.id) }}">
+              <select name="rating" aria-label="Rating for {{ tc.name }}" required>
+                <option value="">Rate 1-5...</option>
+                {% for n in range(1, 6) %}
+                  <option value="{{ n }}" {% if existing and existing.rating == n %}selected{% endif %}>{{ n }} star{{ 's' if n != 1 else '' }}</option>
+                {% endfor %}
+              </select>
+              <textarea name="comment" rows="2" placeholder="Optional comment">{{ existing.comment if existing else '' }}</textarea>
+              <button type="submit" class="review-submit">{{ 'Update review' if existing else 'Submit review' }}</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
   </main>
 </body>
 </html>

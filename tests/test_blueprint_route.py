@@ -120,6 +120,17 @@ class TradeCoordinationRoutesTest(unittest.TestCase):
             project_id = project.id
             framing = TradeCompany.query.filter_by(trade_type="framing").first()
             trade_company_id = framing.id
+            electrical = TradeCompany.query.filter_by(trade_type="electrical").first()
+            electrical_id = electrical.id
+            db.session.add(
+                User(
+                    username="homeowner_test",
+                    password_hash=generate_password_hash("testpass123"),
+                    role="homeowner",
+                    project_id=project_id,
+                )
+            )
+            db.session.commit()
 
         response = self.client.post(
             f"/projects/{project_id}/tasks/new",
@@ -165,6 +176,37 @@ class TradeCoordinationRoutesTest(unittest.TestCase):
 
         with self.app.app_context():
             self.assertEqual(Task.query.get(task_id).status, "complete")
+
+        # Homeowner can review the trade that completed work on their project...
+        self.client.get("/logout")
+        self._login("homeowner_test")
+
+        homeowner_page = self.client.get(f"/homeowner/{project_id}")
+        self.assertIn("Rivera Framing Co.", homeowner_page.get_data(as_text=True))
+
+        review = self.client.post(
+            f"/projects/{project_id}/trades/{trade_company_id}/review",
+            data={"rating": "5", "comment": "Great work, on time."},
+            follow_redirects=True,
+        )
+        self.assertIn("Review saved", review.get_data(as_text=True))
+        self.assertIn("you rated this 5/5", review.get_data(as_text=True))
+
+        # ...but not a trade that never did any work on this project.
+        ineligible = self.client.post(
+            f"/projects/{project_id}/trades/{electrical_id}/review",
+            data={"rating": "5", "comment": "n/a"},
+            follow_redirects=True,
+        )
+        self.assertIn("only review a trade that has completed work", ineligible.get_data(as_text=True))
+
+        with self.app.app_context():
+            self.assertEqual(TradeCompany.query.get(trade_company_id).rating_display, "5.0★ (1 review)")
+
+        # The rating shows up in the public directory on the home page too.
+        self.client.get("/logout")
+        directory = self.client.get("/")
+        self.assertIn("5.0★ (1 review)", directory.get_data(as_text=True))
 
 
 if __name__ == "__main__":

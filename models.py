@@ -32,6 +32,19 @@ class TradeCompany(db.Model):
     phone = db.Column(db.String(20), nullable=False)
     service_area = db.Column(db.String(160), nullable=True)
 
+    @property
+    def average_rating(self):
+        if not self.reviews:
+            return None
+        return sum(r.rating for r in self.reviews) / len(self.reviews)
+
+    @property
+    def rating_display(self):
+        avg = self.average_rating
+        if avg is None:
+            return "No reviews yet"
+        return f"{avg:.1f}★ ({len(self.reviews)} review{'s' if len(self.reviews) != 1 else ''})"
+
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -144,4 +157,23 @@ class User(db.Model):
 
     trade_company = db.relationship("TradeCompany")
     project = db.relationship("Project")
+
+
+class Review(db.Model):
+    """A homeowner's review of a trade company that worked on their project.
+    One review per (project, trade_company) pair — a homeowner updates their
+    existing review rather than piling up duplicates if a trade does more
+    than one task on the same project."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
+    trade_company_id = db.Column(db.Integer, db.ForeignKey("trade_company.id"), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # 1-5
+    comment = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    project = db.relationship("Project", backref="reviews")
+    trade_company = db.relationship("TradeCompany", backref="reviews")
+
+    __table_args__ = (db.UniqueConstraint("project_id", "trade_company_id", name="uq_review_project_trade"),)
 

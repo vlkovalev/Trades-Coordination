@@ -104,11 +104,11 @@
                     {% if task.status == 'pending' %}
                       <!-- GC needs to invite a trade -->
                       <form method="post" action="{{ url_for('invite_trade', task_id=task.id) }}" class="flex gap-12 align-center">
-                        <select name="trade_company_id" required style="padding: 6px 10px; font-size: 0.8rem; width: auto; max-width: 150px;">
+                        <select name="trade_company_id" required aria-label="Select crew" style="padding: 6px 10px; font-size: 0.8rem; width: auto; max-width: 260px;">
                           <option value="">Select crew...</option>
                           {% for tc in trade_companies %}
                             {% if tc.trade_type == task.trade_type_needed %}
-                              <option value="{{ tc.id }}">{{ tc.name }}</option>
+                              <option value="{{ tc.id }}">{{ tc.name }} — {{ tc.rating_display }}</option>
                             {% endif %}
                           {% endfor %}
                         </select>
