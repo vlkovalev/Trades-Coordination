@@ -80,10 +80,10 @@
                   <td>
                     <div class="flex gap-12">
                       <form method="post" action="{{ url_for('accept_assignment', assignment_id=a.id) }}">
-                        <button type="submit" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem; background: var(--status-complete);">Accept</button>
+                        <button type="submit" class="btn btn-primary" style="background: var(--status-complete);">Accept</button>
                       </form>
                       <form method="post" action="{{ url_for('decline_assignment', assignment_id=a.id) }}">
-                        <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Decline</button>
+                        <button type="submit" class="btn btn-secondary">Decline</button>
                       </form>
                     </div>
                   </td>
@@ -117,7 +117,7 @@
                   <td><span class="badge badge-{{ a.task.status }}">{{ a.task.status }}</span></td>
                   <td style="font-family: Consolas, monospace;">{{ a.task.scheduled_date or 'TBD' }}</td>
                   <td>
-                    <a href="{{ url_for('task_detail', task_id=a.task.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">View &amp; Update Status &rarr;</a>
+                    <a href="{{ url_for('task_detail', task_id=a.task.id) }}" class="btn btn-secondary">View &amp; Update Status &rarr;</a>
                   </td>
                 </tr>
               {% else %}
