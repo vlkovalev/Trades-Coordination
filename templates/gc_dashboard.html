@@ -137,7 +137,13 @@
           
           <div style="margin-top: 18px; border-top: 1px solid var(--panel-border); padding-top: 14px;" class="flex justify-between align-center">
             <span class="text-muted" style="font-size: 0.85rem;">Upcoming: {{ row.upcoming|length }} tasks</span>
-            <a href="{{ url_for('project_detail', project_id=row.project.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Manage Schedule &rarr;</a>
+            <div class="flex gap-12">
+              <form method="post" action="{{ url_for('delete_project', project_id=row.project.id) }}"
+                    onsubmit="return confirm('Delete {{ row.project.name }}? This also deletes its homeowner login and consent records, and only works if it has no tasks scheduled.');">
+                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;">Delete</button>
+              </form>
+              <a href="{{ url_for('project_detail', project_id=row.project.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Manage Schedule &rarr;</a>
+            </div>
           </div>
         </div>
       {% else %}

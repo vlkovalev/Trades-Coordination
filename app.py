@@ -451,6 +451,27 @@ def register_routes(app):
 
         return render_template("new_project.html", form={}, consent_text=CONSENT_TEXT)
 
+    @app.route("/projects/<int:project_id>/delete", methods=["POST"])
+    @role_required("gc")
+    def delete_project(project_id):
+        project = Project.query.get_or_404(project_id)
+        if Task.query.filter_by(project_id=project_id).first():
+            flash(
+                f"Can't delete {project.name} — it has tasks scheduled. Remove all tasks first.",
+                "error",
+            )
+            return redirect(url_for("gc_dashboard"))
+
+        name = project.name
+        User.query.filter_by(project_id=project_id).delete()
+        Review.query.filter_by(project_id=project_id).delete()
+        ConsentRecord.query.filter_by(project_id=project_id).delete()
+        db.session.delete(project)
+        _log_audit("GC/PM", "delete_project", "Project", project_id, f"Deleted project '{name}'")
+        db.session.commit()
+        flash(f"{name} removed.", "success")
+        return redirect(url_for("gc_dashboard"))
+
     @app.route("/projects/<int:project_id>")
     @role_required("gc")
     def project_detail(project_id):

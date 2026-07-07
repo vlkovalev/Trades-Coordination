@@ -4,7 +4,7 @@ import unittest
 from werkzeug.security import generate_password_hash
 
 from app import create_app
-from models import Assignment, Project, Task, TradeCompany, User, db
+from models import Assignment, ConsentRecord, Project, Task, TradeCompany, User, db
 
 
 class TradeCoordinationRoutesTest(unittest.TestCase):
@@ -396,6 +396,72 @@ class TradeCoordinationRoutesTest(unittest.TestCase):
         self.client.get("/logout")
         locked_out = self._login("sparky_login", password="sparkypass123")
         self.assertIn("Invalid username or password", locked_out.get_data(as_text=True))
+
+    def test_delete_project_cascades_homeowner_login_but_blocks_with_tasks(self):
+        self._login("gc_test")
+
+        self.client.post(
+            "/projects/new",
+            data={
+                "name": "Test Teardown Project",
+                "client_name": "Alex",
+                "client_phone": "+15555550188",
+                "address": "789 Pine",
+                "budget": "5000",
+                "consent": "yes",
+            },
+            follow_redirects=True,
+        )
+        with self.app.app_context():
+            project_id = Project.query.filter_by(name="Test Teardown Project").first().id
+            # The normal, encouraged new_project flow also creates a ConsentRecord
+            # (via the "consent" checkbox) -- confirm one was actually seeded here
+            # so the deletion below exercises that cleanup, not just User/Review.
+            self.assertIsNotNone(ConsentRecord.query.filter_by(project_id=project_id).first())
+            db.session.add(
+                User(
+                    username="alex_homeowner",
+                    password_hash=generate_password_hash("testpass123"),
+                    role="homeowner",
+                    project_id=project_id,
+                )
+            )
+            db.session.commit()
+
+        # A project with no tasks, but with a homeowner login and a consent
+        # record tied to it, can still be deleted -- unlike a trade company's
+        # login, a homeowner login is scoped 1:1 to its project and is
+        # cascaded away with it (along with its consent records).
+        deleted = self.client.post(f"/projects/{project_id}/delete", follow_redirects=True)
+        self.assertIn("removed", deleted.get_data(as_text=True))
+        with self.app.app_context():
+            self.assertIsNone(Project.query.get(project_id))
+            self.assertIsNone(User.query.filter_by(username="alex_homeowner").first())
+            self.assertIsNone(ConsentRecord.query.filter_by(project_id=project_id).first())
+
+        # A project with a task scheduled cannot be deleted.
+        self.client.post(
+            "/projects/new",
+            data={
+                "name": "Active Project",
+                "client_name": "Sam",
+                "client_phone": "+15555550177",
+                "address": "12 Elm",
+                "budget": "8000",
+            },
+            follow_redirects=True,
+        )
+        with self.app.app_context():
+            active_project_id = Project.query.filter_by(name="Active Project").first().id
+            db.session.add(
+                Task(project_id=active_project_id, trade_type_needed="framing", name="Framing", sequence_order=1)
+            )
+            db.session.commit()
+
+        blocked = self.client.post(f"/projects/{active_project_id}/delete", follow_redirects=True)
+        self.assertIn("Can&#39;t delete".replace("&#39;", "'"), blocked.get_data(as_text=True).replace("&#39;", "'"))
+        with self.app.app_context():
+            self.assertIsNotNone(Project.query.get(active_project_id))
 
 
 if __name__ == "__main__":
