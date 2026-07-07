@@ -1,14 +1,21 @@
 import io
+import os
 import unittest
 
 from werkzeug.security import generate_password_hash
 
-from app import create_app
-from models import Assignment, ConsentRecord, Project, Task, TradeCompany, User, db
+from app import UPLOAD_FOLDER, create_app
+from models import Assignment, CompletionPhoto, ConsentRecord, Project, Task, TradeCompany, User, db
 
 
 class TradeCoordinationRoutesTest(unittest.TestCase):
     def setUp(self):
+        # The login-attempt throttle is a module-level dict (by design, so it
+        # survives across requests in the real app) -- reset it per test so
+        # one test's failed logins can't leak into and block another's.
+        import app as app_module
+        app_module._login_attempts.clear()
+
         self.app = create_app()
         self.client = self.app.test_client()
         with self.app.app_context():
@@ -183,12 +190,24 @@ class TradeCoordinationRoutesTest(unittest.TestCase):
         with self.app.app_context():
             self.assertEqual(Task.query.get(task_id).status, "complete")
 
+        # The completion photo must actually be reachable at the src the page
+        # renders -- regression test for a broken /static/uploads/ path that
+        # meant every completion photo silently 404'd, on this page and the
+        # homeowner's.
+        gc_task_page = self.client.get(f"/tasks/{task_id}")
+        gc_task_text = gc_task_page.get_data(as_text=True)
+        photo_src = gc_task_text.split('src="', 1)[1].split('"', 1)[0]
+        self.assertTrue(photo_src.startswith("/uploads/"), photo_src)
+        self.assertEqual(self.client.get(photo_src).status_code, 200)
+
         # Homeowner can review the trade that completed work on their project...
         self.client.get("/logout")
         self._login("homeowner_test")
 
         homeowner_page = self.client.get(f"/homeowner/{project_id}")
-        self.assertIn("Rivera Framing Co.", homeowner_page.get_data(as_text=True))
+        homeowner_text = homeowner_page.get_data(as_text=True)
+        self.assertIn("Rivera Framing Co.", homeowner_text)
+        self.assertIn(f'src="{photo_src}"', homeowner_text)
 
         review = self.client.post(
             f"/projects/{project_id}/trades/{trade_company_id}/review",
@@ -462,6 +481,152 @@ class TradeCoordinationRoutesTest(unittest.TestCase):
         self.assertIn("Can&#39;t delete".replace("&#39;", "'"), blocked.get_data(as_text=True).replace("&#39;", "'"))
         with self.app.app_context():
             self.assertIsNotNone(Project.query.get(active_project_id))
+
+    def test_uploaded_photo_requires_relevant_access(self):
+        self._login("gc_test")
+        self.client.post(
+            "/projects/new",
+            data={"name": "Photo Project", "client_name": "Pat", "client_phone": "+15555550166", "address": "9 Birch"},
+            follow_redirects=True,
+        )
+        with self.app.app_context():
+            project_id = Project.query.filter_by(name="Photo Project").first().id
+            other_project = Project(name="Other Project", client_name="Lee", client_phone="+15555550167", address="10 Pine", budget=1000)
+            db.session.add(other_project)
+            db.session.flush()
+            other_project_id = other_project.id
+
+            framing_id = TradeCompany.query.filter_by(trade_type="framing").first().id
+            electrical_id = TradeCompany.query.filter_by(trade_type="electrical").first().id
+
+            db.session.add(
+                User(username="other_homeowner", password_hash=generate_password_hash("testpass123"),
+                     role="homeowner", project_id=other_project_id)
+            )
+            db.session.add(
+                User(username="electrical_test", password_hash=generate_password_hash("testpass123"),
+                     role="trade", trade_company_id=electrical_id)
+            )
+            db.session.commit()
+
+        self.client.post(
+            f"/projects/{project_id}/tasks/new",
+            data={"name": "Framing", "trade_type_needed": "framing", "insert_after": ""},
+        )
+        with self.app.app_context():
+            task = Task.query.filter_by(project_id=project_id).first()
+            task_id = task.id
+            db.session.add(CompletionPhoto(task_id=task_id, filename="1_999_secret.jpg"))
+            db.session.commit()
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        photo_path = os.path.join(UPLOAD_FOLDER, "1_999_secret.jpg")
+        with open(photo_path, "wb") as f:
+            f.write(b"fake-image-bytes")
+        self.addCleanup(lambda: os.path.exists(photo_path) and os.remove(photo_path))
+        self.client.post(f"/tasks/{task_id}/invite", data={"trade_company_id": framing_id})
+        with self.app.app_context():
+            assignment_id = Assignment.query.filter_by(task_id=task_id).first().id
+        # Also invite the electrical trade to the same task, then have them
+        # decline -- they were legitimately invited at one point, but must
+        # NOT retain permanent photo access after declining.
+        self.client.post(f"/tasks/{task_id}/invite", data={"trade_company_id": electrical_id})
+        with self.app.app_context():
+            declined_assignment_id = (
+                Assignment.query.filter_by(task_id=task_id, trade_company_id=electrical_id).first().id
+            )
+        self.client.get("/logout")
+        self._login("electrical_test")
+        self.client.post(f"/assignments/{declined_assignment_id}/decline")
+        self.client.get("/logout")
+
+        self._login("rivera_test")
+        self.client.post(f"/assignments/{assignment_id}/accept")
+        self.client.get("/logout")
+
+        # Anonymous: bounced to login, not served the file.
+        anon = self.client.get("/uploads/1_999_secret.jpg")
+        self.assertEqual(anon.status_code, 302)
+
+        # A trade that was invited to this task and then declined: blocked --
+        # a past invitation must not grant permanent photo access.
+        self._login("electrical_test")
+        blocked = self.client.get("/uploads/1_999_secret.jpg", follow_redirects=True)
+        self.assertIn("don&#39;t have access to that photo".replace("&#39;", "'"),
+                      blocked.get_data(as_text=True).replace("&#39;", "'"))
+        self.client.get("/logout")
+
+        # The homeowner of a *different* project: blocked.
+        self._login("other_homeowner")
+        blocked2 = self.client.get("/uploads/1_999_secret.jpg", follow_redirects=True)
+        self.assertIn("don&#39;t have access to that photo".replace("&#39;", "'"),
+                      blocked2.get_data(as_text=True).replace("&#39;", "'"))
+        self.client.get("/logout")
+
+        # The trade actually assigned to the task: allowed.
+        self._login("rivera_test")
+        self.assertEqual(self.client.get("/uploads/1_999_secret.jpg").status_code, 200)
+        self.client.get("/logout")
+
+        # The GC: always allowed.
+        self._login("gc_test")
+        self.assertEqual(self.client.get("/uploads/1_999_secret.jpg").status_code, 200)
+
+    def test_create_and_remove_homeowner_login(self):
+        self._login("gc_test")
+        self.client.post(
+            "/projects/new",
+            data={"name": "Homeowner Login Project", "client_name": "Jordan", "client_phone": "+15555550188", "address": "22 Maple"},
+            follow_redirects=True,
+        )
+        with self.app.app_context():
+            project_id = Project.query.filter_by(name="Homeowner Login Project").first().id
+
+        # No login yet, so it can be created.
+        created = self.client.post(
+            f"/projects/{project_id}/create-homeowner-login",
+            data={"username": "jordan_login", "password": "jordanpass123"},
+            follow_redirects=True,
+        )
+        self.assertIn("Homeowner login created", created.get_data(as_text=True))
+
+        # A second attempt is refused -- one login per project.
+        duplicate = self.client.post(
+            f"/projects/{project_id}/create-homeowner-login",
+            data={"username": "someone_else", "password": "anotherpass123"},
+            follow_redirects=True,
+        )
+        self.assertIn("already has a homeowner login", duplicate.get_data(as_text=True))
+
+        # The new login actually works.
+        self.client.get("/logout")
+        login_check = self._login("jordan_login", password="jordanpass123")
+        self.assertIn("Client Progress Portal", login_check.get_data(as_text=True))
+        self.client.get("/logout")
+
+        # GC removes the login, freeing the project up again.
+        self._login("gc_test")
+        removed = self.client.post(f"/projects/{project_id}/remove-homeowner-login", follow_redirects=True)
+        self.assertIn("removed", removed.get_data(as_text=True))
+
+        self.client.get("/logout")
+        locked_out = self._login("jordan_login", password="jordanpass123")
+        self.assertIn("Invalid username or password", locked_out.get_data(as_text=True))
+
+    def test_login_rate_limiting_blocks_repeated_failures(self):
+        from app import LOGIN_ATTEMPT_LIMIT
+
+        for _ in range(LOGIN_ATTEMPT_LIMIT):
+            resp = self.client.post(
+                "/login", data={"username": "gc_test", "password": "wrong"}, follow_redirects=True
+            )
+            self.assertIn("Invalid username or password", resp.get_data(as_text=True))
+
+        # Even the CORRECT password is now refused -- the IP is throttled,
+        # not just this one bad guess.
+        throttled = self.client.post(
+            "/login", data={"username": "gc_test", "password": "testpass123"}, follow_redirects=True
+        )
+        self.assertIn("Too many failed login attempts", throttled.get_data(as_text=True))
 
 
 if __name__ == "__main__":

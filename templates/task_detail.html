@@ -193,7 +193,7 @@
         <div class="photo-grid">
           {% for p in task.photos %}
             <div class="photo-card">
-              <img src="/static/uploads/{{ p.filename }}" alt="Progress Proof">
+              <img src="{{ url_for('uploaded_file', filename=p.filename) }}" alt="Progress Proof">
               <span>{{ p.uploaded_at.strftime('%b %d, %H:%M') }}</span>
             </div>
           {% endfor %}

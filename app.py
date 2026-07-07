@@ -13,6 +13,7 @@ from flask import (
     session,
     url_for,
 )
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -86,9 +87,38 @@ DEFAULT_TRADE_COMPANIES = [
     ("All-Trade Handyman", "general", "+15555550105", "Metro area"),
 ]
 
+# Simple in-memory login throttle, keyed by IP. Good enough at this scale
+# (single gunicorn worker) to stop naive password-guessing without adding
+# a new dependency; resets on deploy/restart, which is an acceptable
+# tradeoff for a single-business internal tool.
+LOGIN_ATTEMPT_LIMIT = 8
+LOGIN_ATTEMPT_WINDOW_SECONDS = 15 * 60
+_login_attempts = {}
+
+
+def _too_many_login_attempts(ip):
+    now = datetime.utcnow().timestamp()
+    attempts = [t for t in _login_attempts.get(ip, []) if now - t < LOGIN_ATTEMPT_WINDOW_SECONDS]
+    _login_attempts[ip] = attempts
+    return len(attempts) >= LOGIN_ATTEMPT_LIMIT
+
+
+def _record_failed_login(ip):
+    _login_attempts.setdefault(ip, []).append(datetime.utcnow().timestamp())
+
 
 def create_app():
     app = Flask(__name__)
+
+    # On Render, requests reach gunicorn through exactly one trusted reverse
+    # proxy, which sets X-Forwarded-For to the real client IP. Without this,
+    # request.remote_addr resolves to Render's proxy for every request, which
+    # would collapse the login throttle below into a single shared bucket --
+    # 8 failed logins from anyone would lock out everyone. Only trust the
+    # forwarded header when actually running on Render, never locally.
+    if os.environ.get("RENDER"):
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
+
     db_url = os.environ.get("DATABASE_URL", "sqlite:///trades_scheduling.db")
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql+psycopg://", 1)
@@ -96,6 +126,16 @@ def create_app():
         db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-only-secret-key")
+
+    # Render sets RENDER=true in every deployed environment. Only force
+    # Secure cookies there -- a plain http:// local dev server would never
+    # receive the session cookie back if this were always on.
+    app.config["SESSION_COOKIE_SECURE"] = bool(os.environ.get("RENDER"))
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+    # A phone photo is a few MB at most; this just stops one huge upload
+    # from filling the production disk.
+    app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
 
     db.init_app(app)
 
@@ -264,11 +304,17 @@ def register_routes(app):
             return redirect(url_for("dashboard_redirect"))
 
         if request.method == "POST":
+            ip = request.remote_addr or "unknown"
+            if _too_many_login_attempts(ip):
+                flash("Too many failed login attempts. Please wait a few minutes and try again.", "error")
+                return redirect(url_for("login"))
+
             username = request.form.get("username", "").strip()
             password = request.form.get("password", "").strip()
 
             user = User.query.filter_by(username=username).first()
             if user and check_password_hash(user.password_hash, password):
+                _login_attempts.pop(ip, None)
                 session.clear()
                 session["user_id"] = user.id
                 session["role"] = user.role
@@ -280,6 +326,7 @@ def register_routes(app):
                 flash("Logged in successfully.", "success")
                 return redirect(url_for("dashboard_redirect"))
 
+            _record_failed_login(ip)
             flash("Invalid username or password.", "error")
             return redirect(url_for("login"))
 
@@ -479,6 +526,7 @@ def register_routes(app):
         tasks = Task.query.filter_by(project_id=project_id).order_by(Task.sequence_order).all()
         trade_companies = TradeCompany.query.order_by(TradeCompany.name).all()
         readiness_by_task = {t.id: compute_readiness(t) for t in tasks}
+        homeowner_login = User.query.filter_by(project_id=project_id, role="homeowner").first()
         return render_template(
             "project_detail.html",
             project=project,
@@ -486,6 +534,7 @@ def register_routes(app):
             trade_companies=trade_companies,
             trade_types=TRADE_TYPES,
             readiness_by_task=readiness_by_task,
+            homeowner_login=homeowner_login,
         )
 
     @app.route("/projects/<int:project_id>/access-instructions", methods=["POST"])
@@ -498,6 +547,74 @@ def register_routes(app):
         )
         db.session.commit()
         flash("Access instructions updated.", "success")
+        return redirect(url_for("project_detail", project_id=project_id))
+
+    @app.route("/projects/<int:project_id>/create-homeowner-login", methods=["GET", "POST"])
+    @role_required("gc")
+    def create_homeowner_login(project_id):
+        project = Project.query.get_or_404(project_id)
+        existing = User.query.filter_by(project_id=project_id, role="homeowner").first()
+        if existing:
+            flash(f"{project.name} already has a homeowner login ({existing.username}).", "error")
+            return redirect(url_for("project_detail", project_id=project_id))
+
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "").strip()
+
+            errors = []
+            if not username:
+                errors.append("Username is required.")
+            elif User.query.filter_by(username=username).first():
+                errors.append("That username is already taken.")
+            if len(password) < 8:
+                errors.append("Password must be at least 8 characters.")
+
+            if errors:
+                for error in errors:
+                    flash(error, "error")
+                return render_template("create_homeowner_login.html", project=project)
+
+            user = User(
+                username=username,
+                password_hash=generate_password_hash(password),
+                role="homeowner",
+                project_id=project_id,
+            )
+            db.session.add(user)
+            _log_audit(
+                "GC/PM",
+                "create_homeowner_login",
+                "Project",
+                project_id,
+                f"Created homeowner login '{username}' for {project.name}",
+            )
+            db.session.commit()
+            flash(f"Homeowner login created for {project.name}: {username}.", "success")
+            return redirect(url_for("project_detail", project_id=project_id))
+
+        return render_template("create_homeowner_login.html", project=project)
+
+    @app.route("/projects/<int:project_id>/remove-homeowner-login", methods=["POST"])
+    @role_required("gc")
+    def remove_homeowner_login(project_id):
+        project = Project.query.get_or_404(project_id)
+        user = User.query.filter_by(project_id=project_id, role="homeowner").first()
+        if not user:
+            flash(f"{project.name} has no homeowner login to remove.", "error")
+            return redirect(url_for("project_detail", project_id=project_id))
+
+        username = user.username
+        db.session.delete(user)
+        _log_audit(
+            "GC/PM",
+            "remove_homeowner_login",
+            "Project",
+            project_id,
+            f"Removed homeowner login '{username}' for {project.name}",
+        )
+        db.session.commit()
+        flash(f"Login '{username}' removed from {project.name}.", "success")
         return redirect(url_for("project_detail", project_id=project_id))
 
     @app.route("/tasks/<int:task_id>/invite", methods=["POST"])
@@ -957,6 +1074,25 @@ def register_routes(app):
 
     @app.route("/uploads/<path:filename>")
     def uploaded_file(filename):
+        if "user_id" not in session:
+            flash("Please log in to continue.", "error")
+            return redirect(url_for("login"))
+
+        photo = CompletionPhoto.query.filter_by(filename=filename).first_or_404()
+        task = photo.task
+        role = session.get("role")
+
+        is_gc = role == "gc"
+        is_assigned_trade = role == "trade" and any(
+            a.trade_company_id == session.get("trade_company_id") and a.status == "accepted"
+            for a in task.assignments
+        )
+        is_project_homeowner = role == "homeowner" and session.get("project_id") == task.project_id
+
+        if not (is_gc or is_assigned_trade or is_project_homeowner):
+            flash("You don't have access to that photo.", "error")
+            return redirect(url_for("login"))
+
         return send_from_directory(UPLOAD_FOLDER, filename)
 
     # ------------------------------------------------------------------

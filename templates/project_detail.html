@@ -73,6 +73,23 @@
 
         <div style="margin-top: 20px; border-top: 1px dashed var(--panel-border); padding-top: 20px;">
           <a href="{{ url_for('homeowner_view', project_id=project.id) }}" target="_blank" class="btn btn-secondary" style="width: 100%; font-size: 0.85rem; padding: 10px;">Open Homeowner Portal &nearr;</a>
+
+          <div class="flex justify-between align-center" style="margin-top: 14px; font-size: 0.85rem;">
+            <span class="text-muted">Homeowner Login:</span>
+            {% if homeowner_login %}
+              <span class="badge badge-complete" style="font-size: 0.7rem;">{{ homeowner_login.username }}</span>
+            {% else %}
+              <span class="text-muted">No login</span>
+            {% endif %}
+          </div>
+          {% if homeowner_login %}
+            <form method="post" action="{{ url_for('remove_homeowner_login', project_id=project.id) }}"
+                  onsubmit="return confirm('Remove the homeowner login for {{ project.name }}? They will not be able to log in until a new one is created.');">
+              <button type="submit" class="btn btn-secondary" style="width: 100%; font-size: 0.8rem; padding: 8px; margin-top: 8px;">Remove Login</button>
+            </form>
+          {% else %}
+            <a href="{{ url_for('create_homeowner_login', project_id=project.id) }}" class="btn btn-primary" style="display: block; text-align: center; width: 100%; font-size: 0.8rem; padding: 8px; margin-top: 8px;">Create Homeowner Login</a>
+          {% endif %}
         </div>
       </div>
 

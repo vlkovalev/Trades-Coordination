@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Homeowner Login — Constrivo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="{{ url_for('index') }}" class="logo">Constri<span>vo</span></a>
+      <div class="flex align-center gap-12">
+        <span class="user-badge">GC Portal</span>
+        <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <a href="{{ url_for('project_detail', project_id=project.id) }}" style="display: inline-block; margin-bottom: 20px;">&larr; Back to {{ project.name }}</a>
+
+    <div class="card" style="max-width: 480px;">
+      <h2 style="margin-bottom: 4px;">Create Homeowner Login for {{ project.name }}</h2>
+      <p class="text-muted" style="margin-bottom: 20px;">Give {{ project.client_name }} a username and password so they can view their project's progress portal.</p>
+
+      {% with messages = get_flashed_messages(category_filter=["success", "error"]) %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert-box alert-error">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="post">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="e.g., jamie_westremodel" required>
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
+
+        <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Create Login</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

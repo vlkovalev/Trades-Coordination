@@ -205,7 +205,7 @@
             {% if task.photos %}
               <div class="photo-strip">
                 {% for p in task.photos %}
-                  <img src="/static/uploads/{{ p.filename }}" alt="Progress Proof" title="Uploaded at {{ p.uploaded_at.strftime('%Y-%m-%d %H:%M') }}">
+                  <img src="{{ url_for('uploaded_file', filename=p.filename) }}" alt="Progress Proof" title="Uploaded at {{ p.uploaded_at.strftime('%Y-%m-%d %H:%M') }}">
                 {% endfor %}
               </div>
             {% endif %}
